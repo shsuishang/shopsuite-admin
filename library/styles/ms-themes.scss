@@ -1,0 +1,43 @@
+$base-color-primary: #1890ff;
+$base-color-success: #13ce66;
+$base-color-warning: #ffba00;
+$base-color-danger: #ff4d4f;
+$base-color-error: #ff4d4f;
+$base-color-transition: #77e19d;
+
+:export {
+  ms-color-grey: $base-color-grey;
+  ms-color-black: $base-color-black;
+  ms-color-primary: $base-color-primary;
+  ms-color-primary-light-1: mix($base-color-white, $base-color-primary, 10%);
+  ms-color-primary-light-2: mix($base-color-white, $base-color-primary, 20%);
+  ms-color-primary-light-3: mix($base-color-white, $base-color-primary, 30%);
+  ms-color-primary-light-4: mix($base-color-white, $base-color-primary, 40%);
+  ms-color-primary-light-5: mix($base-color-white, $base-color-primary, 50%);
+  ms-color-primary-light-6: mix($base-color-white, $base-color-primary, 60%);
+  ms-color-primary-light-7: mix($base-color-white, $base-color-primary, 70%);
+  ms-color-primary-light-8: mix($base-color-white, $base-color-primary, 80%);
+  ms-color-primary-light-9: mix($base-color-white, $base-color-primary, 90%);
+  ms-color-success: $base-color-success;
+  ms-color-success-light: mix($base-color-white, $base-color-success, 80%);
+  ms-color-success-lighter: mix($base-color-white, $base-color-success, 90%);
+  ms-color-warning: $base-color-warning;
+  ms-color-warning-light: mix($base-color-white, $base-color-warning, 80%);
+  ms-color-warning-lighter: mix($base-color-white, $base-color-warning, 90%);
+  ms-color-danger: $base-color-danger;
+  ms-color-danger-light: mix($base-color-white, $base-color-danger, 80%);
+  ms-color-danger-lighter: mix($base-color-white, $base-color-danger, 90%);
+  ms-color-error: $base-color-error;
+  ms-color-error-light: mix($base-color-white, $base-color-error, 80%);
+  ms-color-error-lighter: mix($base-color-white, $base-color-error, 90%);
+  ms-color-info: $base-color-text-secondary;
+  ms-color-info-light: mix($base-color-white, $base-color-text-secondary, 80%);
+  ms-color-info-lighter: mix(
+      $base-color-white,
+      $base-color-text-secondary,
+      90%
+  );
+  ms-border-radius-base: 2.5px;
+  ms-color-transition: $base-color-transition;
+  ms-left-menu-width: $base-left-menu-width;
+}

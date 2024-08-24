@@ -1,0 +1,1315 @@
+/**
+ * @description 全局样式
+ */
+@import 'element-plus/theme-chalk/display.css';
+
+/*! normalize.css v8.0.1 | MIT License | github.com/necolas/normalize.css */
+
+/* Document
+   ========================================================================== */
+
+/**
+ * 1. Correct the line height in all browsers.
+ * 2. Prevent adjustments of font size after orientation changes in iOS.
+ */
+
+html {
+  line-height: 1.15;
+  /* 1 */
+  -webkit-text-size-adjust: 100%;
+  /* 2 */
+}
+
+/* Sections
+   ========================================================================== */
+
+/**
+ * Remove the margin in all browsers.
+ */
+
+body {
+  margin: 0;
+}
+
+/**
+ * Render the `main` element consistently in IE.
+ */
+
+main {
+  display: block;
+}
+
+/**
+ * Correct the font size and margin on `h1` elements within `section` and
+ * `article` contexts in Chrome, Firefox, and Safari.
+ */
+
+h1 {
+  margin: 0.67em 0;
+  font-size: 2em;
+}
+
+/* Grouping content
+   ========================================================================== */
+
+/**
+ * 1. Add the correct box sizing in Firefox.
+ * 2. Show the overflow in Edge and IE.
+ */
+
+hr {
+  box-sizing: content-box;
+  /* 1 */
+  height: 0;
+  /* 1 */
+  overflow: visible;
+  /* 2 */
+}
+
+/**
+ * 1. Correct the inheritance and scaling of font size in all browsers.
+ * 2. Correct the odd `em` font sizing in all browsers.
+ */
+
+pre {
+  font-family: monospace;
+  /* 1 */
+  font-size: 1em;
+  /* 2 */
+}
+
+/* Text-level semantics
+   ========================================================================== */
+
+/**
+ * Remove the gray background on active links in IE 10.
+ */
+
+a {
+  background-color: transparent;
+}
+
+/**
+ * 1. Remove the bottom border in Chrome 57-
+ * 2. Add the correct text decoration in Chrome, Edge, IE, Opera, and Safari.
+ */
+
+abbr[title] {
+  text-decoration: underline dotted;
+  /* 2 */
+  border-bottom: none;
+  /* 1 */
+}
+
+/**
+ * Add the correct font weight in Chrome, Edge, and Safari.
+ */
+
+b,
+strong {
+  font-weight: bolder;
+}
+
+/**
+ * 1. Correct the inheritance and scaling of font size in all browsers.
+ * 2. Correct the odd `em` font sizing in all browsers.
+ */
+
+code,
+kbd,
+samp {
+  font-family: monospace;
+  /* 1 */
+  font-size: 1em;
+  /* 2 */
+}
+
+/**
+ * Add the correct font size in all browsers.
+ */
+
+small {
+  font-size: 80%;
+}
+
+/**
+ * Prevent `sub` and `sup` elements from affecting the line height in
+ * all browsers.
+ */
+
+sub,
+sup {
+  position: relative;
+  font-size: 75%;
+  line-height: 0;
+  vertical-align: baseline;
+}
+
+sub {
+  bottom: -0.25em;
+}
+
+sup {
+  top: -0.5em;
+}
+
+/* Embedded content
+   ========================================================================== */
+
+/**
+ * Remove the border on images inside links in IE 10.
+ */
+
+img {
+  border-style: none;
+}
+
+/* Forms
+   ========================================================================== */
+
+/**
+ * 1. Change the font styles in all browsers.
+ * 2. Remove the margin in Firefox and Safari.
+ */
+
+button,
+input,
+optgroup,
+select,
+textarea {
+  margin: 0;
+  /* 2 */
+  font-family: inherit;
+  /* 1 */
+  font-size: 100%;
+  /* 1 */
+  line-height: 1.15;
+  /* 1 */
+}
+
+/**
+ * Show the overflow in IE.
+ * 1. Show the overflow in Edge.
+ */
+
+button,
+input {
+  /* 1 */
+  overflow: visible;
+}
+
+/**
+ * Remove the inheritance of text transform in Edge, Firefox, and IE.
+ * 1. Remove the inheritance of text transform in Firefox.
+ */
+
+button,
+select {
+  /* 1 */
+  text-transform: none;
+}
+
+/**
+ * Correct the inability to style clickable types in iOS and Safari.
+ */
+
+button,
+[type='button'],
+[type='reset'],
+[type='submit'] {
+  -webkit-appearance: button;
+}
+
+/**
+ * Remove the inner border and padding in Firefox.
+ */
+
+button::-moz-focus-inner,
+[type='button']::-moz-focus-inner,
+[type='reset']::-moz-focus-inner,
+[type='submit']::-moz-focus-inner {
+  padding: 0;
+  border-style: none;
+}
+
+/**
+ * Restore the focus styles unset by the previous rule.
+ */
+
+button:-moz-focusring,
+[type='button']:-moz-focusring,
+[type='reset']:-moz-focusring,
+[type='submit']:-moz-focusring {
+  outline: 1px dotted ButtonText;
+}
+
+/**
+ * Correct the padding in Firefox.
+ */
+
+fieldset {
+  padding: 0.35em 0.75em 0.625em;
+}
+
+/**
+ * 1. Correct the text wrapping in Edge and IE.
+ * 2. Correct the color inheritance from `fieldset` elements in IE.
+ * 3. Remove the padding so developers are not caught out when they zero out
+ *    `fieldset` elements in all browsers.
+ */
+
+legend {
+  box-sizing: border-box;
+  /* 1 */
+  display: table;
+  /* 1 */
+  max-width: 100%;
+  /* 1 */
+  padding: 0;
+  /* 3 */
+  color: inherit;
+  /* 2 */
+  white-space: normal;
+  /* 1 */
+}
+
+/**
+ * Add the correct vertical alignment in Chrome, Firefox, and Opera.
+ */
+
+progress {
+  vertical-align: baseline;
+}
+
+/**
+ * Remove the default vertical scrollbar in IE 10+.
+ */
+
+textarea {
+  overflow: auto;
+}
+
+/**
+ * 1. Add the correct box sizing in IE 10.
+ * 2. Remove the padding in IE 10.
+ */
+
+[type='checkbox'],
+[type='radio'] {
+  box-sizing: border-box;
+  /* 1 */
+  padding: 0;
+  /* 2 */
+}
+
+/**
+ * Correct the cursor style of increment and decrement buttons in Chrome.
+ */
+
+[type='number']::-webkit-inner-spin-button,
+[type='number']::-webkit-outer-spin-button {
+  height: auto;
+}
+
+/**
+ * 1. Correct the odd appearance in Chrome and Safari.
+ * 2. Correct the outline style in Safari.
+ */
+
+[type='search'] {
+  -webkit-appearance: textfield;
+  /* 1 */
+  outline-offset: -2px;
+  /* 2 */
+}
+
+/**
+ * Remove the inner padding in Chrome and Safari on macOS.
+ */
+
+[type='search']::-webkit-search-decoration {
+  -webkit-appearance: none;
+}
+
+/**
+ * 1. Correct the inability to style clickable types in iOS and Safari.
+ * 2. Change font properties to `inherit` in Safari.
+ */
+
+::-webkit-file-upload-button {
+  /* 1 */
+  font: inherit;
+  -webkit-appearance: button;
+  /* 2 */
+}
+
+/* Interactive
+   ========================================================================== */
+
+/*
+ * Add the correct display in Edge, IE 10+, and Firefox.
+ */
+
+details {
+  display: block;
+}
+
+/*
+ * Add the correct display in all browsers.
+ */
+
+summary {
+  display: list-item;
+}
+
+/* Misc
+   ========================================================================== */
+
+/**
+ * Add the correct display in IE 10+.
+ */
+
+template {
+  display: none;
+}
+
+/**
+ * Add the correct display in IE 10.
+ */
+
+[hidden] {
+  display: none;
+}
+
+/**
+ * @description vue过渡动画
+ */
+
+.fade-transform {
+  &-leave-active,
+  &-enter-active {
+    transition: $base-transition;
+  }
+
+  &-enter,
+  &-leave-to {
+    opacity: 0;
+  }
+}
+
+.no-transform {
+  &-leave-active,
+  &-enter-active {
+    transition: none;
+  }
+
+  &-enter,
+  &-leave-to {
+    opacity: 0;
+  }
+}
+
+/**
+ * @description 旋转动画
+ */
+@keyframes rotate {
+  0% {
+    transform: rotate(0);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+
+@mixin base-scrollbar {
+  &::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  &::-webkit-scrollbar-thumb {
+    background-color: mix($base-color-white, $base-menu-background, 90%);
+    border: 3px solid transparent;
+    border-radius: 7px;
+  }
+  &::-webkit-scrollbar-thumb:hover {
+    background-color: mix($base-color-white, $base-menu-background, 80%);
+  }
+}
+
+.ms-layout-header,
+[class*='-bar-container'] {
+  transition: $base-transition;
+
+  * {
+    transition: $base-transition;
+  }
+}
+
+html {
+  body,
+  body[class*='ms-theme-'] {
+    position: relative;
+    box-sizing: border-box;
+    height: 100vh;
+    padding: 0;
+    overflow: hidden;
+    font-family: 'PingFang SC', Arial, 'Microsoft YaHei', sans-serif;
+    font-size: $base-font-size-default;
+    //color: var(--el-color-black);
+    color: #979898;
+    background: $base-color-background;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+
+    #app {
+      height: 100vh;
+      overflow: auto;
+      @include base-scrollbar;
+
+      .ms-main {
+        transition: $base-transition;
+
+        .ms-app-main {
+          width: 100%;
+          padding: $base-padding;
+          overflow: hidden;
+          transition: $base-transition;
+
+          > section {
+            background: var(--el-color-white);
+            transition: $base-transition;
+
+            > [class*='-container'] {
+              min-height: $base-keep-alive-height;
+              padding: $base-padding;
+              background: var(--el-color-white);
+              transition: $base-transition;
+            }
+          }
+        }
+      }
+    }
+
+    * {
+      box-sizing: border-box;
+      outline: none !important;
+      @include base-scrollbar;
+    }
+
+    [class*='ri-'] {
+      vertical-align: -3px !important;
+    }
+
+    .ms-icon {
+      margin: 0 3px 0 0 !important;
+    }
+
+    /*a标签 */
+    a {
+      color: var(--el-color-primary);
+      text-decoration: none;
+    }
+
+    /*图片 */
+    img {
+      object-fit: cover;
+
+      &[src=''],
+      &:not([src]) {
+        opacity: 0;
+      }
+    }
+
+    /* ms-fullscreen全屏 */
+    .ms-fullscreen {
+      position: fixed !important;
+      top: 0 !important;
+      left: 0 !important;
+      z-index: $base-z-index + 3 !important;
+      box-sizing: border-box !important;
+      width: 100vw !important;
+      height: 100vh !important;
+      padding-bottom: 15px !important;
+      overflow: auto !important;
+    }
+
+    /* ms-dropdown下拉动画 */
+    .ms-dropdown {
+      transition: $base-transition;
+
+      &-active {
+        transform: rotateZ(180deg);
+      }
+    }
+
+    /* ms-dot圆点动画 */
+    .ms-dot {
+      position: relative;
+      display: inline-block;
+      width: 6px;
+      height: 6px;
+      margin-right: 3px;
+      vertical-align: middle;
+      border-radius: 50%;
+
+      span {
+        position: absolute;
+        top: 0;
+        left: 0;
+        box-sizing: border-box;
+        display: block;
+        width: 100%;
+        height: 100%;
+        border-radius: 50%;
+        animation: msDot 1.2s ease-in-out infinite;
+        @keyframes msDot {
+          0% {
+            opacity: 0.6;
+            transform: scale(0.8);
+          }
+          to {
+            opacity: 0;
+            transform: scale(2.4);
+          }
+        }
+      }
+
+      &-success {
+        background: var(--el-color-success);
+
+        span {
+          background: var(--el-color-success);
+        }
+      }
+
+      &-error {
+        background: var(--el-color-error);
+
+        span {
+          background: var(--el-color-error);
+        }
+      }
+    }
+
+    /* ms-data-empty占位图 */
+    .ms-data-empty {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 600px;
+      margin: auto;
+    }
+
+    /* el-descriptions */
+    .el-descriptions {
+      &__title {
+        padding-left: 10px;
+        border-left: 5px solid var(--el-color-primary);
+      }
+    }
+
+    /* el-button按钮 */
+    .el-button {
+      border-radius: var(--el-border-radius-base);
+
+      &--primary {
+        --el-button-bg-color: var(--el-color-primary) !important;
+        --el-button-border-color: var(--el-color-primary) !important;
+        --el-button-hover-bg-color: var(--el-color-primary-light-3) !important;
+        --el-button-hover-border-color: var(
+          --el-color-primary-light-3
+        ) !important;
+        --el-button-active-bg-color: var(--el-color-primary) !important;
+        --el-button-active-border-color: var(--el-color-primary) !important;
+
+        &.is-disabled {
+          --el-button-bg-color: var(--el-color-primary) !important;
+          --el-button-border-color: var(--el-color-primary) !important;
+          --el-button-hover-bg-color: var(
+            --el-color-primary-light-3
+          ) !important;
+          --el-button-hover-border-color: var(
+            --el-color-primary-light-3
+          ) !important;
+          --el-button-active-bg-color: var(--el-color-primary) !important;
+          --el-button-active-border-color: var(--el-color-primary) !important;
+          --el-button-disabled-bg-color: var(
+            --el-color-primary-light-4
+          ) !important;
+          --el-button-disabled-border-color: var(
+            --el-color-primary-light-4
+          ) !important;
+
+          &.is-plain {
+            color: var(--el-color-primary-light-5) !important;
+            background-color: var(--el-color-primary-light-9) !important;
+            border-color: var(--el-color-primary-light-8) !important;
+          }
+        }
+
+        &.is-plain {
+          --el-button-bg-color: var(--el-color-primary-light-9) !important;
+          --el-button-border-color: var(--el-color-primary-light-7) !important;
+          --el-button-text-color: var(--el-color-primary) !important;
+          --el-button-hover-text-color: var(--el-color-white);
+          --el-button-hover-bg-color: var(--el-color-primary) !important;
+          --el-button-hover-border-color: var(--el-color-primary) !important;
+          --el-button-active-bg-color: var(--el-color-primary) !important;
+          --el-button-active-text-color: var(--el-color-white);
+          --el-button-active-border-color: var(--el-color-primary) !important;
+        }
+      }
+
+      &.is-round {
+        border-radius: var(--el-border-radius-round);
+      }
+
+      &.is-circle {
+        border-radius: var(--el-border-radius-circle);
+      }
+
+      [class*='ri-'] {
+        margin-right: 3px;
+        font-size: 12px;
+        vertical-align: -1.8px;
+      }
+
+      .el-icon {
+        font-size: 12px;
+      }
+
+      [class*='el-icon-'] + span {
+        margin-left: 3px;
+      }
+    }
+
+    /* el-tag */
+    .el-tag {
+      border-radius: var(--el-border-radius-base);
+
+      & + .el-tag {
+        margin-left: 10px;
+      }
+
+      &--light:not(&--success, &--info, &--warning, &--danger) {
+        --el-tag-bg-color: var(--el-color-primary-light-9);
+        --el-tag-border-color: var(--el-color-primary-light-8);
+        --el-tag-text-color: var(--el-color-primary);
+        --el-tag-hover-color: var(--el-color-primary);
+      }
+
+      &--dark:not(&--success, &--info, &--warning, &--danger) {
+        --el-tag-bg-color: var(--el-color-primary);
+        --el-tag-border-color: var(--el-color-primary);
+        --el-tag-hover-color: var(--el-color-primary-2);
+      }
+
+      &.is-round {
+        border-radius: var(--el-border-radius-round);
+      }
+    }
+
+    /* .el-select-tags */
+    .el-select-tags-wrapper {
+      .el-tag.el-tag {
+        margin-left: 0px;
+      }
+    }
+
+    a + a,
+   /*   span + span, */
+     a + .el-button,
+     .el-button + a {
+      margin-left: 10px;
+    }
+
+    .el-drawer__wrapper {
+      outline: none !important;
+
+      * {
+        outline: none !important;
+      }
+    }
+
+    /* el-overlay遮罩 */
+    .el-overlay {
+      background-color: rgba(0, 0, 0, 0.1);
+      backdrop-filter: blur(3px);
+    }
+
+    /* el-image-viewer遮罩 */
+    .el-image-viewer__mask {
+      background-color: rgba(0, 0, 0, 0.1);
+      backdrop-filter: blur(3px);
+    }
+
+    /* v-modal遮罩 */
+    .v-modal {
+      z-index: $base-z-index;
+      background-color: rgba(0, 0, 0, 0.5);
+      opacity: 0.6;
+      //backdrop-filter: blur(10px);
+    }
+
+    /* el-loading-mask遮罩 */
+    .el-loading-mask {
+      z-index: $base-z-index - 10 !important;
+
+      &.is-fullscreen {
+        z-index: $base-z-index + 99 !important;
+      }
+    }
+
+    /* el-scrollbar滚动条 */
+    .el-scrollbar {
+      height: 100%;
+
+      &__bar {
+        z-index: 999;
+      }
+
+      &__thumb {
+        background-color: mix($base-color-white, $base-menu-background, 90%);
+
+        &:hover {
+          background-color: mix($base-color-white, $base-menu-background, 80%);
+        }
+      }
+    }
+
+    /* el-form表单 */
+    .el-form--label-top {
+      .el-form-item__label {
+        padding: 0;
+      }
+    }
+
+    .el-form-item__label {
+      padding: 0 10px 0 0;
+    }
+
+    .el-range-editor--small {
+      .el-range__icon,
+      .el-range__close-icon {
+        line-height: 23.5px;
+      }
+    }
+
+    /*  el-badge */
+    .el-badge__content {
+      border: 0;
+    }
+
+    /*  .el-page-header */
+    .el-page-header {
+      margin: 0 0 $base-margin 0;
+    }
+
+    /* el-alert */
+    .el-alert {
+      margin: 0 0 $base-margin 0;
+
+      &__closebtn {
+        position: absolute !important;
+      }
+
+      &--success.is-light {
+        color: var(--el-color-success);
+        background-color: var(--el-color-success-lighter);
+        border: 1px solid var(--el-color-success);
+
+        i {
+          color: var(--el-color-success);
+        }
+      }
+
+      &--info.is-light {
+        color: var(--el-color-primary);
+        background-color: var(--el-color-primary-light-9);
+        border: 1px solid var(--el-color-primary);
+
+        i {
+          color: var(--el-color-primary);
+        }
+      }
+
+      &--warning.is-light {
+        color: var(--el-color-warning);
+        background-color: var(--el-color-warning-lighter);
+        border: 1px solid var(--el-color-warning);
+
+        i {
+          color: var(--el-color-warning);
+        }
+      }
+
+      &--error.is-light {
+        color: var(--el-color-error);
+        background-color: var(--el-color-error-lighter);
+        border: 1px solid var(--el-color-error);
+
+        i {
+          color: var(--el-color-error);
+        }
+      }
+    }
+
+    /* el-divider间隔线 */
+    .el-divider--horizontal {
+      margin: 8px 0 $base-margin + 8px 0;
+
+      .el-divider__text {
+        display: -webkit-box;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        -webkit-line-clamp: 1;
+        -webkit-box-orient: vertical;
+      }
+    }
+
+    /* nprogress进度条 */
+    #nprogress {
+      position: fixed;
+      z-index: $base-z-index + 3;
+
+      .bar {
+        background: var(--el-color-primary);
+      }
+
+      .peg {
+        box-shadow:
+          0 0 10px var(--el-color-primary),
+          0 0 5px var(--el-color-primary);
+      }
+    }
+
+    /* el-table表格 */
+    .el-table {
+      .el-table__body-wrapper {
+        @include base-scrollbar;
+      }
+
+      th {
+        background: #f5f7fa !important;
+      }
+
+      td,
+      th {
+        position: relative;
+        box-sizing: border-box;
+
+        .cell {
+          font-size: $base-font-size-default;
+          font-weight: normal;
+          color: #606266;
+
+          .el-image {
+            width: 50px;
+            height: 50px;
+            border-radius: $base-border-radius;
+          }
+        }
+      }
+
+      th {
+        .cell {
+          font-weight: bold;
+        }
+      }
+    }
+
+    /* el-pagination分页 */
+    .el-pagination {
+      justify-content: center;
+      margin: $base-margin 0 0 0;
+      font-weight: normal;
+      color: var(--el-color-black);
+    }
+
+    /* el-menu菜单开始 */
+    .el-menu,
+    .ms-column-grid {
+      user-select: none;
+
+      /* plus处理图标间距 */
+      div,
+      li,
+      span {
+        i + span {
+          margin-left: 3px;
+        }
+      }
+
+      &.ms-column-grid-card,
+      &.ms-column-grid-vertical {
+        div {
+          i + span {
+            margin-left: 0;
+          }
+        }
+      }
+    }
+
+    /* el-dialog、el-message-box、el-popover、el-button、el-tag */
+    @media (max-width: 576px) {
+      .el-dialog,
+      .el-message-box,
+      .el-popover.el-popper {
+        width: auto !important;
+        margin: 5vw;
+      }
+
+      .el-button {
+        margin-bottom: 10px;
+      }
+    }
+    /* el-card卡片 */
+    .el-card {
+      margin-bottom: $base-margin;
+      border-radius: var(--el-border-radius-base);
+
+      &__header {
+        position: relative;
+
+        .card-header-tag {
+          position: absolute;
+          top: 15px;
+          right: 20px;
+        }
+      }
+
+      &__body {
+        padding: $base-padding;
+      }
+    }
+
+    /* .ms-hey-message */
+    .ms-hey-message {
+      @mixin ms-hey-message {
+        min-width: 246px;
+        padding: 15px;
+        background-color: var(--el-color-white);
+        border-color: var(--el-color-white);
+        box-shadow: 0 5px 10px rgba(0, 0, 0, 0.15);
+
+        .el-message__content {
+          padding-right: $base-padding;
+          color: #34495e;
+        }
+
+        .el-icon-close {
+          color: #34495e;
+
+          &:hover {
+            opacity: 0.8;
+          }
+        }
+      }
+
+      &-info {
+        @include ms-hey-message;
+
+        i {
+          color: $base-color-grey;
+        }
+      }
+
+      &-success {
+        @include ms-hey-message;
+
+        i {
+          color: var(--el-color-success);
+        }
+      }
+
+      &-warning {
+        @include ms-hey-message;
+
+        i {
+          color: var(--el-color-warning);
+        }
+      }
+
+      &-error {
+        @include ms-hey-message;
+
+        i {
+          color: var(--el-color-error);
+        }
+      }
+    }
+
+    /* ms-table-expand */
+    .ms-table-expand {
+      padding: $base-padding;
+      line-height: 30px;
+
+      &-title {
+        display: inline-block;
+        width: 80px;
+        font-weight: bold;
+      }
+    }
+  }
+}
+
+/**
+ * @description 黑
+ */
+
+body.ms-theme-black {
+  $base-menu-background: #282c34;
+
+  @mixin container {
+    //color: var(--el-color-white) !important;
+    color: $base-menu-color !important;
+    background: $base-menu-background !important;
+  }
+
+  @mixin active {
+    &:hover {
+      //color: var(--el-color-white) !important;
+      color: $base-menu-color-active !important;
+      background-color: var(--el-color-primary) !important;
+    }
+
+    &.is-active {
+      //color: var(--el-color-white) !important;
+      color: $base-menu-color-active !important;
+      background-color: var(--el-color-primary) !important;
+    }
+  }
+
+  .logo-container-vertical,
+  .logo-container-horizontal,
+  .logo-container-comprehensive,
+  .logo-container-float {
+    @include container;
+  }
+
+  .logo-container-column {
+    .logo {
+      @include container;
+    }
+  }
+
+  .el-tabs__item {
+    /*color: #606266 !important;*/
+  }
+
+  .ms-column-bar-container.el-scrollbar {
+    .el-tabs {
+      .el-tabs__nav-wrap.is-left {
+        @include container;
+      }
+
+      .el-tabs__nav {
+        @include container;
+      }
+
+      .el-tabs__item.is-active {
+        background: var(--el-color-primary) !important;
+      }
+    }
+
+    .el-menu {
+      .el-menu-item.is-active,
+      .el-sub-menu__title.is-active,
+      .el-menu-item:hover,
+      .el-sub-menu__title:hover {
+        i {
+          color: var(--el-color-primary) !important;
+        }
+
+        color: var(--el-color-primary) !important;
+        background-color: var(--el-color-primary-light-9) !important;
+      }
+    }
+  }
+
+  .ms-column-bar-container-card.el-scrollbar {
+    .el-tabs {
+      .el-tabs__item.is-active {
+        background: transparent !important;
+
+        .ms-column-grid {
+          background: var(--el-color-primary) !important;
+        }
+      }
+    }
+  }
+
+  .ms-column-bar-container-arrow.el-scrollbar {
+    .el-tabs {
+      .el-tabs__item.is-active {
+        background: transparent !important;
+
+        .ms-column-grid {
+          background: transparent !important;
+        }
+      }
+    }
+  }
+
+  .ms-layout-float,
+  .ms-layout-common,
+  .ms-layout-vertical,
+  .ms-layout-horizontal,
+  .ms-layout-comprehensive {
+    .el-menu {
+      @include container;
+
+      .el-sub-menu .el-sub-menu__title,
+      .el-menu-item {
+        @include container;
+      }
+    }
+
+    .ms-side-bar,
+    .comprehensive-bar-container {
+      @include container;
+
+      .el-menu-item {
+        @include active;
+      }
+    }
+  }
+
+  .ms-layout-float {
+    .el-scrollbar__view .el-menu--collapse.el-menu li.el-sub-menu.is-active {
+      .el-sub-menu__title {
+        background-color: transparent !important;
+      }
+
+      > .el-sub-menu__title {
+        background-color: var(--el-color-primary) !important;
+      }
+    }
+  }
+
+  .ms-header {
+    @include container;
+
+    .ms-main {
+      @include container;
+
+      .right-panel {
+        .el-menu {
+          &--horizontal {
+            .el-sub-menu .el-sub-menu__title,
+            .el-menu-item {
+              @include active;
+            }
+          }
+        }
+        [role='menubar'].el-menu--horizontal {
+          > .el-sub-menu.is-active[tabindex='0'] {
+            > .el-sub-menu__title {
+              //color: var(--el-color-white) !important;
+              color: $base-menu-color !important;
+              background-color: var(--el-color-primary) !important;
+            }
+          }
+        }
+      }
+    }
+  }
+
+  .ms-tabs {
+    &-more {
+      &-active,
+      &:hover {
+        .ms-tabs-more-icon {
+          .box:before,
+          .box:after {
+            background: var(--el-color-primary) !important;
+          }
+        }
+      }
+    }
+
+    .ms-tabs-content-card {
+      .el-tabs__header {
+        .el-tabs__item {
+          &.is-active {
+            color: var(--el-color-primary) !important;
+            background: var(--el-color-primary-light-9) !important;
+            border: 1px solid var(--el-color-primary) !important;
+          }
+
+          &:hover {
+            border: 1px solid var(--el-color-primary) !important;
+          }
+        }
+      }
+    }
+
+    .ms-tabs-content-smart {
+      .el-tabs__header {
+        .el-tabs__item {
+          &.is-active {
+            background: var(--el-color-primary-light-9) !important;
+          }
+
+          &:after {
+            background-color: var(--el-color-primary) !important;
+          }
+
+          &:hover {
+            background: var(--el-color-primary-light-9) !important;
+          }
+        }
+      }
+    }
+
+    .ms-tabs-content-smooth {
+      .el-tabs__header {
+        .el-tabs__item {
+          &.is-active {
+            color: var(--el-color-primary) !important;
+            background: var(--el-color-primary-light-9) !important;
+
+            &:hover {
+              color: var(--el-color-primary) !important;
+              background: var(--el-color-primary-light-9) !important;
+            }
+          }
+
+          &:hover {
+            color: var(--el-color-black) !important;
+          }
+        }
+      }
+    }
+  }
+
+  .ms-nav {
+    .el-tabs__item.is-active,
+    .el-tabs__item:hover {
+      color: var(--el-color-primary) !important;
+    }
+
+    .el-tabs__active-bar {
+      background-color: var(--el-color-primary) !important;
+    }
+  }
+
+  #nprogress {
+    .bar {
+      background: var(--el-color-primary) !important;
+    }
+
+    .peg {
+      box-shadow:
+        0 0 10px var(--el-color-primary),
+        0 0 5px var(--el-color-primary) !important;
+    }
+  }
+}
+
+
+.center-dialog {
+  top: 50%;
+  transform: translateY(-50%)
+}

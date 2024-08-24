@@ -1,0 +1,6 @@
+library/build/vuePlugins/components.d.ts
+node_modules
+src/assets
+src/icons
+public
+dist

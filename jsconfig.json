@@ -1,0 +1,18 @@
+{
+  "compilerOptions": {
+    "target": "ESNext",
+    "module": "ESNext",
+    "baseUrl": "./",
+    "moduleResolution": "node",
+    "allowSyntheticDefaultImports": true,
+    "paths": {
+      "~/*": ["*"],
+      "@/*": ["src/*"],
+      "/#/*": ["types/*"],
+      "@sslib/*": ["library/*"],
+      "@gp": ["library/plugins/ms"]
+    },
+    "lib": ["esnext", "dom", "dom.iterable", "scripthost"]
+  },
+  "exclude": ["node_modules", "dist"]
+}

@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="zh-cmn-Hans">
+  <head>
+    <meta charset="utf-8" />
+    <meta content="IE=edge" http-equiv="X-UA-Compatible" />
+    <meta content="webkit" name="renderer" />
+    <meta
+      content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"
+      name="viewport"
+    />
+    <link href="favicon.ico" rel="icon" />
+    <title><%= VUE_APP_TITLE %></title>
+    <meta
+      content="ShopSuite Admin"
+      name="keywords"
+    />
+    <meta content="<%= VUE_APP_AUTHOR %>" name="author" />
+
+    <link href="static/css/zerocons/css/zerocons.css?v=<%= VUE_APP_VER %>" rel="stylesheet" />
+    <link
+      href="static/css/loading.css?random=<%= VUE_APP_RANDOM %>"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="diy-pc/static/admin/common/css/dialog.css?random=<%= VUE_APP_RANDOM %>">
+
+    <script>
+      window.base_url = "<%= VUE_APP_BASE_URL %>";
+      window.api_url = "<%= VUE_APP_API_URL %>";
+      window.admin_url = "<%= VUE_APP_ADMIN_URL %>";
+      window.ver = "<%= VUE_APP_VER %>";
+      window.SYS = {CONFIG:{}, URL:{}};
+    </script>
+
+    <script type="text/javascript" src="<%= VUE_APP_ADMIN_URL %>/config.js?v=<%= VUE_APP_VER %>"></script>
+    <script type="text/javascript" src="<%= VUE_APP_ADMIN_URL %>/im/libs3.6.0.min.js?v=<%= VUE_APP_VER %>"></script>
+    <script type="text/javascript" src="<%= VUE_APP_ADMIN_URL %>/im/im.js?v=<%= VUE_APP_VER %>"></script>
+  </head>
+  <body class="ms-theme-black">
+    <noscript></noscript>
+    <div id="app">
+      <div class="first-loading-wrp">
+        <div class="loading-wrp">
+          <span class="dot dot-spin">
+            <i></i>
+            <i></i>
+            <i></i>
+            <i></i>
+          </span>
+        </div>
+        <h1><%= VUE_APP_TITLE %></h1>
+      </div>
+    </div>
+  </body>
+</html>
