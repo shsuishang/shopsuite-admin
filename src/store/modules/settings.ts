@@ -66,6 +66,8 @@ export const useSettingsStore = defineStore('settings', {
     lock,
     logo,
     title,
+    cmp:'随商信息技术（上海）有限公司',
+    url:'https://www.shopsuite.cn',
     echartsGraphic1: ['#3ED572', '#399efd'],
     echartsGraphic2: ['#399efd', '#8cc8ff'],
   }),

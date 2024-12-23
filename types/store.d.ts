@@ -34,6 +34,8 @@ declare interface SettingsModuleType {
   lock: boolean
   logo: string
   title: string
+  cmp: string
+  url: string
   echartsGraphic1: string[]
   echartsGraphic2: string[]
 }

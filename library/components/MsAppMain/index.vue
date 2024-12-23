@@ -23,5 +23,6 @@
     <section>
       <ms-router-view />
     </section>
+    <ms-footer />
   </div>
 </template>
