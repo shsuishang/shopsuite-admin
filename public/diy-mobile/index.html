@@ -4011,7 +4011,7 @@
 
 
                   <!--分类商品 start-->
-                  <div v-if="item.eltmType==104 && false">
+                  <div v-if="item.eltmType==104">
                     <div class="sub-level1 box_border">
                       <div class="sub-label">
                         是否展示过滤价格
@@ -4021,7 +4021,17 @@
                                v-model="item.eltm104.isShowFilter"/>
                       </div>
                     </div>
-                    <div class="sub-level1 box_border">
+                    <div v-if="false" class="sub-level1 box_border">
+                      <div class="sub-label">
+                        是否展示加载状态
+                      </div>
+                      <div class="inputicon">
+                        <input class="weui-switch" type="checkbox"
+                               v-model="item.eltm104.isShowLoading"/>
+                      </div>
+                    </div>
+
+                    <div v-if="false" class="sub-level1 box_border">
                       <div class="sub-label">
                         价格区域选项
                       </div>
@@ -4030,7 +4040,7 @@
                       </div>
                     </div>
 
-                    <div class="sub-level1 box_border">
+                    <div v-if="false" class="sub-level1 box_border">
                       <div class="sub-label">
                         排序选项
                       </div>

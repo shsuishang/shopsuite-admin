@@ -190,6 +190,27 @@ const url = {
       download: api + '/manage/sys/release/download',
       getLicence: api + '/manage/sys/release/getLicence'
     },
+    currencyBase: {
+      list: api + '/manage/sys/currencyBase/list',
+      add: api + '/manage/sys/currencyBase/add',
+      edit: api + '/manage/sys/currencyBase/edit',
+      editState: api + '/manage/sys/currencyBase/editState',
+      remove: api + '/manage/sys/currencyBase/remove',
+    },
+    langMeta: {
+      list: api + '/manage/sys/langMeta/list',
+      add: api + '/manage/sys/langMeta/add',
+      edit: api + '/manage/sys/langMeta/edit',
+      editState: api + '/manage/sys/langMeta/editState',
+      remove: api + '/manage/sys/langMeta/remove',
+    },
+    langStandard: {
+      list: api + '/manage/sys/langStandard/list',
+      add: api + '/manage/sys/langStandard/add',
+      edit: api + '/manage/sys/langStandard/edit',
+      editState: api + '/manage/sys/langStandard/editState',
+      remove: api + '/manage/sys/langStandard/remove',
+    },
   },
   account: {
     userInfo:{
@@ -225,9 +246,11 @@ const url = {
     userCompany:{
       list: api + '/manage/account/userCompany/list',
       add: api + '/manage/account/userCompany/add',
+      addChildrenUser: api + '/manage/account/userCompany/addChildrenUser',
       edit: api + '/manage/account/userCompany/edit',
       remove: api + '/manage/account/userCompany/remove',
       editState: api + '/manage/account/userCompany/editState',
+      editRole: api + '/manage/account/userCompany/editRole',
     },
     userCompanyType:{
       list: api + '/manage/account/userCompanyType/list',
@@ -449,6 +472,7 @@ const url = {
     consumeWithdraw: {
       list: api + '/manage/pay/consumeWithdraw/list',
       edit: api + '/manage/pay/consumeWithdraw/edit',
+      wechatTransfer: api + '/manage/pay/consumeWithdraw/wechatTransfer',
     },
     distributionWithdraw: {
       list: api + '/manage/pay/distributionWithdraw/list',
