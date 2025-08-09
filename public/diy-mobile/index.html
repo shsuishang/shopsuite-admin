@@ -25,6 +25,176 @@
     var SYSTEM = SYSTEM || {};
     SYSTEM.skin = 'green';
 
+    window.sprintf = function () {
+      var regex = /%%|%(\d+$)?([\-+'#0 ]*)(\*\d+$|\*|\d+)?(?:\.(\*\d+$|\*|\d+))?([scboxXuideEfFgG])/g
+      var a = arguments
+      var i = 0
+      var format = a[i++]
+
+      var _pad = function (str, len, chr, leftJustify) {
+        if (!chr) {
+          chr = ' '
+        }
+        var padding = (str.length >= len) ? '' : new Array(1 + len - str.length >>> 0).join(chr)
+        return leftJustify ? str + padding : padding + str
+      }
+
+      var justify = function (value, prefix, leftJustify, minWidth, zeroPad, customPadChar) {
+        var diff = minWidth - value.length
+        if (diff > 0) {
+          if (leftJustify || !zeroPad) {
+            value = _pad(value, minWidth, customPadChar, leftJustify)
+          } else {
+            value = [
+              value.slice(0, prefix.length),
+              _pad('', diff, '0', true),
+              value.slice(prefix.length)
+            ].join('')
+          }
+        }
+        return value
+      }
+
+      var _formatBaseX = function (value, base, prefix, leftJustify, minWidth, precision, zeroPad) {
+        // Note: casts negative numbers to positive ones
+        var number = value >>> 0
+        prefix = (prefix && number && {
+          '2': '0b',
+          '8': '0',
+          '16': '0x'
+        }[base]) || ''
+        value = prefix + _pad(number.toString(base), precision || 0, '0', false)
+        return justify(value, prefix, leftJustify, minWidth, zeroPad)
+      }
+
+      // _formatString()
+      var _formatString = function (value, leftJustify, minWidth, precision, zeroPad, customPadChar) {
+        if (precision !== null && precision !== undefined) {
+          value = value.slice(0, precision)
+        }
+        return justify(value, '', leftJustify, minWidth, zeroPad, customPadChar)
+      }
+
+      // doFormat()
+      var doFormat = function (substring, valueIndex, flags, minWidth, precision, type) {
+        var number, prefix, method, textTransform, value
+
+        if (substring === '%%') {
+          return '%'
+        }
+
+        // parse flags
+        var leftJustify = false
+        var positivePrefix = ''
+        var zeroPad = false
+        var prefixBaseX = false
+        var customPadChar = ' '
+        var flagsl = flags.length
+        var j
+        for (j = 0; j < flagsl; j++) {
+          switch (flags.charAt(j)) {
+            case ' ':
+              positivePrefix = ' '
+              break
+            case '+':
+              positivePrefix = '+'
+              break
+            case '-':
+              leftJustify = true
+              break
+            case "'":
+              customPadChar = flags.charAt(j + 1)
+              break
+            case '0':
+              zeroPad = true
+              customPadChar = '0'
+              break
+            case '#':
+              prefixBaseX = true
+              break
+          }
+        }
+
+        // parameters may be null, undefined, empty-string or real valued
+        // we want to ignore null, undefined and empty-string values
+        if (!minWidth) {
+          minWidth = 0
+        } else if (minWidth === '*') {
+          minWidth = +a[i++]
+        } else if (minWidth.charAt(0) === '*') {
+          minWidth = +a[minWidth.slice(1, -1)]
+        } else {
+          minWidth = +minWidth
+        }
+
+        // Note: undocumented perl feature:
+        if (minWidth < 0) {
+          minWidth = -minWidth
+          leftJustify = true
+        }
+
+        if (!isFinite(minWidth)) {
+          throw new Error('sprintf: (minimum-)width must be finite')
+        }
+
+        if (!precision) {
+          precision = 'fFeE'.indexOf(type) > -1 ? 6 : (type === 'd') ? 0 : undefined
+        } else if (precision === '*') {
+          precision = +a[i++]
+        } else if (precision.charAt(0) === '*') {
+          precision = +a[precision.slice(1, -1)]
+        } else {
+          precision = +precision
+        }
+
+        // grab value using valueIndex if required?
+        value = valueIndex ? a[valueIndex.slice(0, -1)] : a[i++]
+
+        switch (type) {
+          case 's':
+            return _formatString(value + '', leftJustify, minWidth, precision, zeroPad, customPadChar)
+          case 'c':
+            return _formatString(String.fromCharCode(+value), leftJustify, minWidth, precision, zeroPad)
+          case 'b':
+            return _formatBaseX(value, 2, prefixBaseX, leftJustify, minWidth, precision, zeroPad)
+          case 'o':
+            return _formatBaseX(value, 8, prefixBaseX, leftJustify, minWidth, precision, zeroPad)
+          case 'x':
+            return _formatBaseX(value, 16, prefixBaseX, leftJustify, minWidth, precision, zeroPad)
+          case 'X':
+            return _formatBaseX(value, 16, prefixBaseX, leftJustify, minWidth, precision, zeroPad)
+              .toUpperCase()
+          case 'u':
+            return _formatBaseX(value, 10, prefixBaseX, leftJustify, minWidth, precision, zeroPad)
+          case 'i':
+          case 'd':
+            number = +value || 0
+            // Plain Math.round doesn't just truncate
+            number = Math.round(number - number % 1)
+            prefix = number < 0 ? '-' : positivePrefix
+            value = prefix + _pad(String(Math.abs(number)), precision, '0', false)
+            return justify(value, prefix, leftJustify, minWidth, zeroPad)
+          case 'e':
+          case 'E':
+          case 'f': // @todo: Should handle locales (as per setlocale)
+          case 'F':
+          case 'g':
+          case 'G':
+            number = +value
+            prefix = number < 0 ? '-' : positivePrefix
+            method = ['toExponential', 'toFixed', 'toPrecision']['efg'.indexOf(type.toLowerCase())]
+            textTransform = ['toString', 'toUpperCase']['eEfFgG'.indexOf(type) % 2]
+            value = prefix + Math.abs(number)[method](precision)
+            return justify(value, prefix, leftJustify, minWidth, zeroPad)[textTransform]()
+          default:
+            return substring
+        }
+      }
+
+      return format.replace(regex, doFormat)
+    }
+
+    SYS.LD = {lang:'zh_CN', currency_id:86, symbol:'￥', symbol_right:'RMB'};
   </script>
 
   <link rel="stylesheet" href="./static/diy/css/diy.css?v=1.0.1">
@@ -49,18 +219,18 @@
           <ul>
             <li v-on:click="Release">
               <i class="iconfont icon-baocun-copy-copy"></i>
-              <h1>保存</h1>
+              <h1>{{__('保存')}}</h1>
             </li>
           </ul>
         </div>
         <div class="header_center">
-          综合电商
+          {{__('综合电商')}}
         </div>
         <div class="header_right" style="display: none;">
           <ul>
             <li v-on:click="DownloadCode">
               <i class="iconfont icon-xiazai"></i>
-              <h1>下载代码</h1>
+              <h1>{{__('下载代码')}}</h1>
             </li>
           </ul>
         </div>
@@ -70,31 +240,31 @@
           <div class="nav-tabs component-tabs">
             <div class="nav-tabs-item" data-component="true"
                  v-bind:class="{active:componenttabNum==2}" data-tabNum="2" v-on:click="selectTab">
-              <label data-component="true" data-tabNum="2">页面管理</label>
+              <label data-component="true" data-tabNum="2">{{__('页面管理')}}</label>
             </div>
             <div class="nav-tabs-item" data-component="true"
                  v-bind:class="{active:componenttabNum==1}" data-tabNum="1" v-on:click="selectTab">
-              <label data-component="true" data-tabNum="1">组件库</label>
+              <label data-component="true" data-tabNum="1">{{__('组件库')}}</label>
             </div>
           </div>
           <div class="weui-grids pageList" v-if="componenttabNum==2">
             <div class="sub-content left-sub-content">
               <div class="expand_menu_box" v-for="(item,index) in pageList">
                 <div class="sub-level-title" :editId="item.Id" v-on:click.stop="editPage">
-                  {{(index+1)}}. {{item.PageTitle?item.PageTitle:'第'+(index+1)+'项'}}
+                  {{(index+1)}}. {{item.PageTitle?item.PageTitle:sprintf(__('第 %s 项'), (index+1))}}
                   <span class="isHome"><i class="iconfont icon-shouye"
                                           v-if="item.IsHome"></i></span>
                   <span class="isHome"><i class="iconfont icon-pengyouquan"
                                           v-if="item.IsSns"></i></span>
                   <span class="isHome"><i class="iconfont icon-jifen"
-                                          v-if="item.IsPoint">积分</i></span>
+                                          v-if="item.IsPoint">{{__('积分')}}</i></span>
                   <i class="iconfont icon-moreunfold"></i>
                   <i class="iconfont icon-icon-del-copy" :delId="item.Id"
                      v-on:click.stop="removePage"></i>
                   <i class="iconfont icon-zhengzaijieru" :editId="item.Id"
                      :style="{display:(editPageId!=item.Id?'none':'')}"
                      style="font-size: 14px;"><label style="font-size: 12px;"
-                                                     :editId="item.Id">编辑中...</label></i>
+                                                     :editId="item.Id">{{__('编辑中...')}}</label></i>
 
                   <!--
                   <span class="IsRelease" :editId="item.Id" v-if="item.IsRelease"><i
@@ -105,23 +275,23 @@
                 </div>
                 <div class="expand_menu_content hidebox left-expand_menu_content"  :style="{display:(editPageId!=item.Id?'none':'block')}">
                   <div class="sub-level1 box_border">
-                    <div class="inputicon inputBox" style="min-width:20px;">首页</div>
+                    <div class="inputicon inputBox" style="min-width:20px;">{{__('首页')}}</div>
                     <div class="inputicon inputBox" style="margin-right: 5px;">
                       <input class="weui-switch" type="checkbox" v-model="item.IsHome"
                                :HometPageId="item.Id" v-on:change="setHomePage"/>
                     </div>
 
 
-                    <div class="inputicon inputBox" style="min-width:20px;">社区 </div>
+                    <div class="inputicon inputBox" style="min-width:20px;">{{__('社区')}}</div>
                     <div class="inputicon inputBox" style="margin-right: 5px;"><input class="weui-switch" type="checkbox" v-model="item.IsSns"
                                :SnsPageId="item.Id" v-on:change="setSnsPage"/></div>
 
-                    <div class="inputicon inputBox" style="min-width:20px;" v-if="false">资讯 </div>
+                    <div class="inputicon inputBox" style="min-width:20px;" v-if="false">{{__('资讯')}} </div>
                     <div class="inputicon inputBox" style="margin-right: 5px;" v-if="false"><input class="weui-switch" type="checkbox" v-model="item.IsArticle"
                              :PointPageId="item.Id" :data-page-id="item.Id"
                              data-page-type="IsArticle" v-on:change="setDefaultPage"/></div>
 
-                    <div class="inputicon inputBox" style="min-width:20px;" v-if="false">积分 </div>
+                    <div class="inputicon inputBox" style="min-width:20px;" v-if="false">{{__('积分')}} </div>
                     <div class="inputicon inputBox" style="margin-right: 5px;" v-if="false"><input class="weui-switch" type="checkbox" v-model="item.IsPoint"
                            :PointPageId="item.Id" :data-page-id="item.Id"
                            data-page-type="IsPoint" v-on:change="setDefaultPage"/></div>
@@ -315,27 +485,27 @@
 
                   <div class="sub-level1 box_border">
                     <div class="sub-label">
-                      页面标题
+                      {{__('页面标题')}}
                     </div>
                     <div class="inputBox">
                        <input maxlength="20" type="text" v-model="item.PageTitle"
-                                  placeholder="请输入页面标题" style="width:100px;" />  编号 <input maxlength="20" type="text" v-model="item.Id"
+                                  placeholder="请输入页面标题" style="width:100px;" />  {{__('编号')}} <input maxlength="20" type="text" v-model="item.Id"
                                                                        style="background-color: #e7e6e6;width:83px;" placeholder="请输入页面编号" readonly/>
                     </div>
                   </div>
                   <div class="sub-level1 box_border">
                     <div class="sub-label">
-                      分享标题
+                      {{__('分享标题')}}
                     </div>
                     <div class="inputBox">
                        <input maxlength="30" type="text" v-model="item.ShareTitle"
-                             placeholder="请输入页面分享标题" style="width:227px;"/>
+                             :placeholder="__('请输入页面分享标题')" style="width:227px;"/>
                     </div>
                   </div>
                   <!--图片 start-->
                   <div class="sub-level1 box_border share-image">
                     <div class="sub-label">
-                      分享图片
+                      {{__('分享图片')}}
                     </div>
                     <div class="inputbox">
                       <div class="shear_box">
@@ -346,7 +516,7 @@
                           小程序
                         </div>
                         <div class="shear_tip" v-if="false">
-                          {{item.ShareTitle || '请输入分享的标题'}}
+                          {{item.ShareTitle || __('请输入分享的标题')}}
                         </div>
                         <div class="shear_img">
 															<span v-if="isUploadImage">
@@ -358,7 +528,7 @@
                                :imgId="item.Id" :uptype="1"/>
                         </div>
                         <div class="shear_bottom" v-if="false">
-                          <i class="iconfont icon-xiaochengxu"></i>小程序
+                          <i class="iconfont icon-xiaochengxu"></i>{{__('小程序')}}
                         </div>
                       </div>
                     </div>
@@ -369,16 +539,16 @@
               <div class="expand_menu_box">
                 <div class="sub-level-title" :editId="PersonalCenter.Id"
                      v-on:click.stop="editPage">
-                  用户中心 <i class="iconfont icon-moreunfold"></i>
+                  {{__('用户中心')}} <i class="iconfont icon-moreunfold"></i>
                   <i class="iconfont icon-zhengzaijieru" :editId="PersonalCenter.Id"
                      :style="{display:(editPageId!=PersonalCenter.Id?'none':'')}"
                      style="font-size: 14px;"><label style="font-size: 12px;"
-                                                     editId="PersonalCenter">编辑中...</label></i>
+                                                     editId="PersonalCenter">{{__('编辑中...')}}</label></i>
                 </div>
                 <div class="expand_menu_content left-expand_menu_content hidebox">
                   <div class="sub-level1 box_border">
                     <div class="sub-label">
-                      展示样式
+                      {{__('展示样式')}}
                     </div>
                     <div class="inputicon">
                       <div class="radioBox">
@@ -417,13 +587,13 @@
 
             <div style="padding: 10px 0;" v-if="FeatureKeyList.indexOf('DiyLnkPage')>=0">
               <div class="msk_add_ad" v-on:click="addPage">
-                <label></label>新增页面
+                <label></label>{{__('新增页面')}}
               </div>
             </div>
             <div class="vipBox" style="background-color: #31364a; padding: 10px 0;"
                  v-if="FeatureKeyList.indexOf('DiyLnkPage')<0">
               <div class="msk_add_ad ">
-                <label></label>新增页面
+                <label></label>{{__('新增页面')}}
               </div>
             </div>
           </div>
@@ -432,123 +602,124 @@
               <div class="weui-grid__icon" :ckType="3">
                 <img src="./static/diy/img/z_07.png" :ckType="3"/>
               </div>
-              <h1 class="weui-grid__label" :ckType="3">轮播</h1>
+              <h1 class="weui-grid__label" :ckType="3">{{__('轮播')}}</h1>
             </li>
             <li class="weui-grid" v-on:click="addModule" :ckType="1">
               <div class="weui-grid__icon" :ckType="1">
                 <img src="./static/diy/img/z_03.png" :ckType="1"/>
               </div>
-              <h1 class="weui-grid__label" :ckType="1">图片</h1>
+              <h1 class="weui-grid__label" :ckType="1">{{__('图片')}}</h1>
             </li>
             <li class="weui-grid" v-on:click="addModule" :ckType="6">
               <div class="weui-grid__icon" :ckType="6">
                 <img src="./static/diy/img/z_16.png" :ckType="6"/>
               </div>
-              <h1 class="weui-grid__label" :ckType="6">图片组</h1>
+              <h1 class="weui-grid__label" :ckType="6">{{__('图片组')}}</h1>
             </li>
             <li class="weui-grid" v-on:click="addModule" :ckType="4">
               <div class="weui-grid__icon" :ckType="4">
                 <img src="./static/diy/img/z_13.png" :ckType="4"/>
               </div>
-              <h1 class="weui-grid__label" :ckType="4">商品列表</h1>
+              <h1 class="weui-grid__label" :ckType="4">{{__('商品列表')}}</h1>
             </li>
             <li class="weui-grid" v-on:click="addModule" :ckType="7">
               <div class="weui-grid__icon" :ckType="7">
                 <img src="./static/diy/img/z_20.png" :ckType="7"/>
               </div>
-              <h1 class="weui-grid__label" :ckType="7">功能入口</h1><!-- 默认四个-->
+              <h1 class="weui-grid__label" :ckType="7">{{__('功能入口')}}</h1><!-- 默认四个-->
             </li>
+            <!--
             <li class="weui-grid" v-on:click="addModule" :ckType="2">
               <div class="weui-grid__icon" :ckType="2">
                 <img src="./static/diy/img/z_05.png" :ckType="2"/>
               </div>
               <h1 class="weui-grid__label" :ckType="2">富文本</h1>
-            </li>
+            </li> -->
             <li class="weui-grid" v-on:click="addModule" :ckType="5">
               <div class="weui-grid__icon" :ckType="5">
                 <img src="./static/diy/img/z_15.png" :ckType="5"/>
               </div>
-              <h1 class="weui-grid__label" :ckType="5">辅助空白</h1>
+              <h1 class="weui-grid__label" :ckType="5">{{__('辅助空白')}}</h1>
             </li>
             <li class="weui-grid" v-on:click="addModule" :ckType="9">
               <div class="weui-grid__icon" :ckType="9">
                 <img src="./static/diy/img/z_22.png" :ckType="9"/>
               </div>
-              <h1 class="weui-grid__label" :ckType="9">搜索</h1>
+              <h1 class="weui-grid__label" :ckType="9">{{__('搜索')}}</h1>
             </li>
             <li class="weui-grid" v-on:click="addModule" :ckType="8">
               <div class="weui-grid__icon" :ckType="8">
                 <img src="./static/diy/img/z_23.png" :ckType="8"/>
               </div>
-              <h1 class="weui-grid__label" :ckType="8">电话</h1>
+              <h1 class="weui-grid__label" :ckType="8">{{__('电话')}}</h1>
             </li>
             <span class="weui-grid" v-on:click="addSingleModule" :ckType="10">
 									<div class="weui-grid__icon" :ckType="10">
 										<img src="./static/diy/img/z_24.png" :ckType="10"/>
 									</div>
-									<h1 class="weui-grid__label" :ckType="10">背景</h1>
+									<h1 class="weui-grid__label" :ckType="10">{{__('背景')}}</h1>
 								</span>
             <li class="weui-grid" v-on:click="addModule" :ckType="11">
               <div class="weui-grid__icon" :ckType="11">
                 <img src="./static/diy/img/z_25.png" :ckType="11"/>
               </div>
-              <h1 class="weui-grid__label" :ckType="11">客服</h1>
+              <h1 class="weui-grid__label" :ckType="11">{{__('客服')}}</h1>
             </li>
             <li class="weui-grid" v-on:click="addModule" :ckType="12"
                 v-if="FeatureKeyList.indexOf('VideoCnt')>=0">
               <div class="weui-grid__icon" :ckType="12">
                 <img src="./static/diy/img/z_26.png" :ckType="12"/>
               </div>
-              <h1 class="weui-grid__label" :ckType="12">视频</h1>
+              <h1 class="weui-grid__label" :ckType="12">{{__('视频')}}</h1>
             </li>
             <span class="weui-grid vipBox" v-if="FeatureKeyList.indexOf('VideoCnt')<0">
 									<div class="weui-grid__icon">
 										<img src="./static/diy/img/z_26.png"/>
 									</div>
-									<h1 class="weui-grid__label">视频</h1>
+									<h1 class="weui-grid__label">{{__('视频')}}</h1>
 								</span>
             <li class="weui-grid" v-on:click="addModule" :ckType="13"
                 v-if="FeatureKeyList.indexOf('DynForm')>=0">
               <div class="weui-grid__icon" :ckType="13">
                 <img src="./static/diy/img/z_28.png" :ckType="13"/>
               </div>
-              <h1 class="weui-grid__label" :ckType="13">动态表单</h1>
+              <h1 class="weui-grid__label" :ckType="13">{{__('动态表单')}}</h1>
             </li>
             <span class="weui-grid vipBox" v-if="FeatureKeyList.indexOf('DynForm')<0">
 									<div class="weui-grid__icon">
 										<img src="./static/diy/img/z_28.png"/>
 									</div>
-									<h1 class="weui-grid__label">动态表单</h1>
+									<h1 class="weui-grid__label">{{__('动态表单')}}</h1>
 								</span>
             <li class="weui-grid" v-on:click="addModule" :ckType="14">
               <div class="weui-grid__icon" :ckType="14">
                 <img src="./static/diy/img/z_29.png" :ckType="14"/>
               </div>
-              <h1 class="weui-grid__label" :ckType="14">通告栏</h1>
+              <h1 class="weui-grid__label" :ckType="14">{{__('通告栏')}}</h1>
             </li>
             <li class="weui-grid" v-on:click="addModule" :ckType="15">
               <div class="weui-grid__icon" :ckType="15">
                 <img src="./static/diy/img/z_30.png" :ckType="15"/>
               </div>
-              <h1 class="weui-grid__label" :ckType="15">标题</h1>
+              <h1 class="weui-grid__label" :ckType="15">{{__('标题')}}</h1>
             </li>
             <li class="weui-grid" v-on:click="addModule" :ckType="16">
               <div class="weui-grid__icon" :ckType="16">
                 <img src="./static/diy/img/z_31.png" :ckType="16"/>
               </div>
-              <h1 class="weui-grid__label" :ckType="16">营销活动</h1>
+              <h1 class="weui-grid__label" :ckType="16">{{__('营销活动')}}</h1>
             </li>
             <li class="weui-grid" v-on:click="addModule" :ckType="17">
               <div class="weui-grid__icon" :ckType="17">
                 <img src="./static/diy/img/z_32.png" :ckType="17"/>
               </div>
-              <h1 class="weui-grid__label" :ckType="17">优惠券</h1>
+              <h1 class="weui-grid__label" :ckType="17">{{__('优惠券')}}</h1>
             </li>
             <li class="weui-grid" v-on:click="addModule" :ckType="18">
               <div class="weui-grid__icon" :ckType="18">
                 <img src="./static/diy/img/z_98.png" :ckType="18"/>
               </div>
-              <h1 class="weui-grid__label" :ckType="18">公众号关注</h1>
+              <h1 class="weui-grid__label" :ckType="18">{{__('公众号关注')}}</h1>
             </li>
 
 
@@ -556,7 +727,7 @@
               <div class="weui-grid__icon" :ckType="101">
                 <img src="./static/diy/img/z_07.png" :ckType="101"/>
               </div>
-              <h1 class="weui-grid__label" :ckType="101">猜你喜欢</h1>
+              <h1 class="weui-grid__label" :ckType="101">{{__('猜你喜欢')}}</h1>
             </li>
 
             <!--
@@ -578,7 +749,7 @@
               <div class="weui-grid__icon" :ckType="104">
                 <img src="./static/diy/img/z_07.png" :ckType="104"/>
               </div>
-              <h1 class="weui-grid__label" :ckType="104">分类商品</h1>
+              <h1 class="weui-grid__label" :ckType="104">{{__('分类商品')}}</h1>
             </li>
           </ul>
         </vue-scroll>
@@ -743,11 +914,11 @@
                      v-on:click="editModule" :divid="item.id" :editType="item.eltmType">
                   <ul>
                     <li v-on:click.stop="editModule" :divid="item.id"
-                        :editType="item.eltmType">编辑
+                        :editType="item.eltmType">{{__('编辑')}}
                     </li>
                     <li v-bind:id="item.id" :editType="item.eltmType"
                         v-on:click.stop="remvoeModule">
-                      删除
+                      {{__('删除')}}
                     </li>
                   </ul>
                 </div>
@@ -779,11 +950,11 @@
                      v-on:click="editModule" :divid="item.id" :editType="item.eltmType">
                   <ul>
                     <li v-on:click.stop="editModule" :divid="item.id"
-                        :editType="item.eltmType">编辑
+                        :editType="item.eltmType">{{__('编辑')}}
                     </li>
                     <li v-bind:id="item.id" :editType="item.eltmType"
                         v-on:click.stop="remvoeModule">
-                      删除
+                      {{__('删除')}}
                     </li>
                   </ul>
                 </div>
@@ -812,11 +983,11 @@
                        v-on:click="editModule" :divid="item.id" :editType="item.eltmType">
                     <ul>
                       <li v-on:click.stop="editModule" :divid="item.id"
-                          :editType="item.eltmType">编辑
+                          :editType="item.eltmType">{{__('编辑')}}
                       </li>
                       <li v-bind:id="item.id" :editType="item.eltmType"
                           v-on:click.stop="remvoeModule">
-                        删除
+                        {{__('删除')}}
                       </li>
                     </ul>
                   </div>
@@ -950,11 +1121,11 @@
                      v-on:click="editModule" :divid="item.id" :editType="item.eltmType">
                   <ul>
                     <li v-on:click.stop="editModule" :divid="item.id"
-                        :editType="item.eltmType">编辑
+                        :editType="item.eltmType">{{__('编辑')}}
                     </li>
                     <li v-bind:id="item.id" :editType="item.eltmType"
                         v-on:click.stop="remvoeModule">
-                      删除
+                      {{__('删除')}}
                     </li>
                   </ul>
                 </div>
@@ -967,11 +1138,11 @@
                      v-on:click="editModule" :divid="item.id" :editType="item.eltmType">
                   <ul>
                     <li v-on:click.stop="editModule" :divid="item.id"
-                        :editType="item.eltmType">编辑
+                        :editType="item.eltmType">{{__('编辑')}}
                     </li>
                     <li v-bind:id="item.id" :editType="item.eltmType"
                         v-on:click.stop="remvoeModule">
-                      删除
+                      {{__('删除')}}
                     </li>
                   </ul>
                 </div>
@@ -1045,11 +1216,11 @@
                      v-on:click="editModule" :divid="item.id" :editType="item.eltmType">
                   <ul>
                     <li v-on:click.stop="editModule" :divid="item.id"
-                        :editType="item.eltmType">编辑
+                        :editType="item.eltmType">{{__('编辑')}}
                     </li>
                     <li v-bind:id="item.id" :editType="item.eltmType"
                         v-on:click.stop="remvoeModule">
-                      删除
+                      {{__('删除')}}
                     </li>
                   </ul>
                 </div>
@@ -1085,11 +1256,11 @@
                      v-on:click="editModule" :divid="item.id" :editType="item.eltmType">
                   <ul>
                     <li v-on:click.stop="editModule" :divid="item.id"
-                        :editType="item.eltmType">编辑
+                        :editType="item.eltmType">{{__('编辑')}}
                     </li>
                     <li v-bind:id="item.id" :editType="item.eltmType"
                         v-on:click.stop="remvoeModule">
-                      删除
+                      {{__('删除')}}
                     </li>
                   </ul>
                 </div>
@@ -1110,11 +1281,11 @@
                      v-on:click="editModule" :divid="item.id" :editType="item.eltmType">
                   <ul>
                     <li v-on:click.stop="editModule" :divid="item.id"
-                        :editType="item.eltmType">编辑
+                        :editType="item.eltmType">{{__('编辑')}}
                     </li>
                     <li v-bind:id="item.id" :editType="item.eltmType"
                         v-on:click.stop="remvoeModule">
-                      删除
+                      {{__('删除')}}
                     </li>
                   </ul>
                 </div>
@@ -1139,11 +1310,11 @@
                        v-on:click="editModule" :divid="item.id" :editType="item.eltmType">
                     <ul>
                       <li v-on:click.stop="editModule" :divid="item.id"
-                          :editType="item.eltmType">编辑
+                          :editType="item.eltmType">{{__('编辑')}}
                       </li>
                       <li v-bind:id="item.id" :editType="item.eltmType"
                           v-on:click.stop="remvoeModule">
-                        删除
+                        {{__('删除')}}
                       </li>
                     </ul>
                   </div>
@@ -1283,16 +1454,16 @@
                         <div class="activity-name"
                              v-if="item.eltm16.isShowPname=='undefined' || item.eltm16.isShowPname"
                              :style="{height:item.eltm16.charLine==1?'15px':'34px','-webkit-line-clamp':item.eltm16.charLine}">
-                          请选择活动商品
+                          {{__('请选择活动商品')}}
                         </div>
                         <div class="activity-price"
                              v-if="item.eltm16.isShowPrice=='undefined' || item.eltm16.isShowPrice">
 															<span class="price"
                                     :style="{color:item.eltm16.priceColor}">￥00</span><span
-                          class="del-price">￥00</span><span class="tip">0人团</span>
+                          class="del-price">￥00</span><span class="tip">{{__('0人团')}}</span>
                         </div>
                         <div class="activity-desc" v-if="item.eltm16.isShowNum">
-                          已有0000人参加
+                          {{__('已有0000人参加')}}
                         </div>
                       </div>
                     </div>
@@ -1349,7 +1520,7 @@
                         <div class="activity-name"
                              v-if="item.eltm16.isShowPname=='undefined' || item.eltm16.isShowPname"
                              :style="{height:item.eltm16.charLine==1?'15px':'34px','-webkit-line-clamp':item.eltm16.charLine}">
-                          请选择活动商品
+                          {{__('请选择活动商品')}}
                         </div>
                         <div class="activity-desc">
                           <span class="tip">2人团</span><span
@@ -1371,7 +1542,7 @@
                        v-on:click="editModule" :divid="item.id" :editType="item.eltmType">
                     <ul>
                       <li v-on:click.stop="editModule" :divid="item.id"
-                          :editType="item.eltmType">编辑
+                          :editType="item.eltmType">{{__('编辑')}}
                       </li>
                       <li v-bind:id="item.id" :editType="item.eltmType"
                           v-on:click.stop="remvoeModule">删除
@@ -1413,7 +1584,7 @@
                        v-on:click="editModule" :divid="item.id" :editType="item.eltmType">
                     <ul>
                       <li v-on:click.stop="editModule" :divid="item.id"
-                          :editType="item.eltmType">编辑
+                          :editType="item.eltmType">{{__('编辑')}}
                       </li>
                       <li v-bind:id="item.id" :editType="item.eltmType"
                           v-on:click.stop="remvoeModule">删除
@@ -1493,23 +1664,23 @@
                 </div>
                 <div v-if="item.eltm13.data.length==0">
                   <div class="fromInput">
-                    <label v-bind:style="{color:item.eltm13.labelColor}">联系电话</label>
+                    <label v-bind:style="{color:item.eltm13.labelColor}">{{__('联系电话')}}</label>
                     <input type="text" name="name" value="" placeholder="请输入联系电话"
                            :style="{color:item.eltm13.textColor}"/>
                   </div>
                   <div class="fromInput">
-                    <label v-bind:style="{color:item.eltm13.labelColor}">选择时间</label>
+                    <label v-bind:style="{color:item.eltm13.labelColor}">{{__('选择时间')}}</label>
                     <input type="date" name="name" value="" placeholder="请选择时间"
                            :style="{color:item.eltm13.textColor}"/>
                   </div>
                   <div class="fromInput">
-                    <label v-bind:style="{color:item.eltm13.labelColor}">输入描述</label>
+                    <label v-bind:style="{color:item.eltm13.labelColor}">{{__('输入描述')}}</label>
                     <textarea placeholder="请输入描述" :style="{color:item.eltm13.textColor}">
 
                                     </textarea>
                   </div>
                   <div class="fromCK">
-                    <label v-bind:style="{color:item.eltm13.labelColor}">单项选择</label>
+                    <label v-bind:style="{color:item.eltm13.labelColor}">{{__('单项选择')}}</label>
                     <div class="fromCK_item">
                       <input type="radio" id="d" name="name" checked="checked"
                              value=""/><i class="iconfont icon-danxuan1"></i><i
@@ -1553,10 +1724,10 @@
                   <ul>
                     <li v-on:click.stop="editModule" :divid="item.id"
                         :editType="item.eltmType">
-                      编辑
+                      {{__('编辑')}}
                     </li>
                     <li v-bind:id="item.id" :editType="item.eltmType"
-                        v-on:click.stop="remvoeModule">删除
+                        v-on:click.stop="remvoeModule">{{__('删除')}}
                     </li>
                   </ul>
                 </div>
@@ -1574,10 +1745,10 @@
                        v-on:click="editModule" :divid="item.id" :editType="item.eltmType">
                     <ul>
                       <li v-on:click.stop="editModule" :divid="item.id"
-                          :editType="item.eltmType">编辑
+                          :editType="item.eltmType">{{__('编辑')}}
                       </li>
                       <li v-bind:id="item.id" :editType="item.eltmType"
-                          v-on:click.stop="remvoeModule">删除
+                          v-on:click.stop="remvoeModule">{{__('删除')}}
                       </li>
                     </ul>
                   </div>
@@ -1598,11 +1769,11 @@
                      v-on:click="editModule" :divid="item.id" :editType="item.eltmType">
                   <ul>
                     <li v-on:click.stop="editModule" :divid="item.id"
-                        :editType="item.eltmType">编辑
+                        :editType="item.eltmType">{{__('编辑')}}
                     </li>
                     <li v-bind:id="item.id" :editType="item.eltmType"
                         v-on:click.stop="remvoeModule">
-                      删除
+                      {{__('删除')}}
                     </li>
                   </ul>
                 </div>
@@ -1622,11 +1793,11 @@
                      v-on:click="editModule" :divid="item.id" :editType="item.eltmType">
                   <ul>
                     <li v-on:click.stop="editModule" :divid="item.id"
-                        :editType="item.eltmType">编辑
+                        :editType="item.eltmType">{{__('编辑')}}
                     </li>
                     <li v-bind:id="item.id" :editType="item.eltmType"
                         v-on:click.stop="remvoeModule">
-                      删除
+                      {{__('删除')}}
                     </li>
                   </ul>
                 </div>
@@ -1647,11 +1818,11 @@
                      v-on:click="editModule" :divid="item.id" :editType="item.eltmType">
                   <ul>
                     <li v-on:click.stop="editModule" :divid="item.id"
-                        :editType="item.eltmType">编辑
+                        :editType="item.eltmType">{{__('编辑')}}
                     </li>
                     <li v-bind:id="item.id" :editType="item.eltmType"
                         v-on:click.stop="remvoeModule">
-                      删除
+                      {{__('删除')}}
                     </li>
                   </ul>
                 </div>
@@ -1671,11 +1842,11 @@
                      v-on:click="editModule" :divid="item.id" :editType="item.eltmType">
                   <ul>
                     <li v-on:click.stop="editModule" :divid="item.id"
-                        :editType="item.eltmType">编辑
+                        :editType="item.eltmType">{{__('编辑')}}
                     </li>
                     <li v-bind:id="item.id" :editType="item.eltmType"
                         v-on:click.stop="remvoeModule">
-                      删除
+                      {{__('删除')}}
                     </li>
                   </ul>
                 </div>
@@ -1690,11 +1861,11 @@
                      v-on:click="editModule" :divid="item.id" :editType="item.eltmType">
                   <ul>
                     <li v-on:click.stop="editModule" :divid="item.id"
-                        :editType="item.eltmType">编辑
+                        :editType="item.eltmType">{{__('编辑')}}
                     </li>
                     <li v-bind:id="item.id" :editType="item.eltmType"
                         v-on:click.stop="remvoeModule">
-                      删除
+                      {{__('删除')}}
                     </li>
                   </ul>
                 </div>
@@ -1708,11 +1879,11 @@
                      v-on:click="editModule" :divid="item.id" :editType="item.eltmType">
                   <ul>
                     <li v-on:click.stop="editModule" :divid="item.id"
-                        :editType="item.eltmType">编辑
+                        :editType="item.eltmType">{{__('编辑')}}
                     </li>
                     <li v-bind:id="item.id" :editType="item.eltmType"
                         v-on:click.stop="remvoeModule">
-                      删除
+                      {{__('删除')}}
                     </li>
                   </ul>
                 </div>
@@ -1723,7 +1894,7 @@
         </vue-scroll>
         <div class="msk_qrCode" style="height: 46px;bottom:100px;">
           <a class="msk_qrcode_btn" v-on:click="Release" style="margin-top: 4px;">
-            保存预览 </a>
+            {{__('保存预览')}} </a>
           <div id="msk_qrcode_img" style="display: none">
           </div>
           <label
@@ -1733,57 +1904,57 @@
         <div class="full_msk" v-if="isShowDataInfoList">
           <div class="full_msk_cn">
             <div class="full_msk_title" v-if="listType==1 || listType==104">
-              选择商品 <i class="iconfont icon-chuyidong" v-on:click="closeList"></i>
+              {{__('选择')}} {{__('商品')}} <i class="iconfont icon-chuyidong" v-on:click="closeList"></i>
             </div>
             <div class="full_msk_title" v-if="listType==2">
-              选择分类 <i class="iconfont icon-chuyidong" v-on:click="closeList"></i>
+              {{__('选择')}} {{__('分类')}} <i class="iconfont icon-chuyidong" v-on:click="closeList"></i>
             </div>
             <div class="full_msk_title" v-if="listType==3">
-              选择素材 <i class="iconfont icon-chuyidong" v-on:click="closeList"></i>
+              {{__('选择')}} {{__('素材')}} <i class="iconfont icon-chuyidong" v-on:click="closeList"></i>
             </div>
             <div class="full_msk_title" v-if="listType==4">
-              选择快捷入口 <i class="iconfont icon-chuyidong" v-on:click="closeList"></i>
+              {{__('选择')}} {{__('快捷入口')}} <i class="iconfont icon-chuyidong" v-on:click="closeList"></i>
             </div>
             <div class="full_msk_title" v-if="listType==5">
-              选择资讯分类 <i class="iconfont icon-chuyidong" v-on:click="closeList"></i>
+              {{__('选择')}} {{__('资讯分类')}} <i class="iconfont icon-chuyidong" v-on:click="closeList"></i>
             </div>
             <div class="full_msk_title" v-if="listType==6">
-              选择资讯 <i class="iconfont icon-chuyidong" v-on:click="closeList"></i>
+              {{__('选择')}} {{__('资讯')}} <i class="iconfont icon-chuyidong" v-on:click="closeList"></i>
             </div>
             <div class="full_msk_title" v-if="listType==7">
-              选择导航地址 <i class="iconfont icon-chuyidong" v-on:click="closeList"></i>
+              {{__('选择')}} {{__('导航地址')}} <i class="iconfont icon-chuyidong" v-on:click="closeList"></i>
             </div>
             <div class="full_msk_title" v-if="listType==8">
-              选择页面地址 <i class="iconfont icon-chuyidong" v-on:click="closeList"></i>
+              {{__('选择')}} {{__('页面地址')}} <i class="iconfont icon-chuyidong" v-on:click="closeList"></i>
             </div>
             <div class="full_msk_title" v-if="listType==10">
-              选择社区板块地址 <i class="iconfont icon-chuyidong" v-on:click="closeList"></i>
+              {{__('选择')}} {{__('社区板块地址')}} <i class="iconfont icon-chuyidong" v-on:click="closeList"></i>
             </div>
             <div class="full_msk_title" v-if="listType==11">
-              选择社区帖子地址 <i class="iconfont icon-chuyidong" v-on:click="closeList"></i>
+              {{__('选择')}} {{__('社区帖子地址')}} <i class="iconfont icon-chuyidong" v-on:click="closeList"></i>
             </div>
             <div class="full_msk_title" v-if="listType==12">
-              选择拼团商品 <i class="iconfont icon-chuyidong" v-on:click="closeList"></i>
+              {{__('选择')}} {{__('拼团商品')}} <i class="iconfont icon-chuyidong" v-on:click="closeList"></i>
             </div>
             <div class="full_msk_title" v-if="listType==13">
-              选择抽奖团商品 <i class="iconfont icon-chuyidong" v-on:click="closeList"></i>
+              {{__('选择')}} {{__('抽奖团商品')}} <i class="iconfont icon-chuyidong" v-on:click="closeList"></i>
             </div>
             <div class="full_msk_title" v-if="listType==14">
-              选择秒杀商品 <i class="iconfont icon-chuyidong" v-on:click="closeList"></i>
+              {{__('选择')}} {{__('秒杀商品')}} <i class="iconfont icon-chuyidong" v-on:click="closeList"></i>
             </div>
             <div class="full_msk_title" v-if="listType==15">
-              选择砍价商品 <i class="iconfont icon-chuyidong" v-on:click="closeList"></i>
+              {{__('选择')}} {{__('砍价商品')}} <i class="iconfont icon-chuyidong" v-on:click="closeList"></i>
             </div>
             <div class="full_msk_title" v-if="listType==17">
-              选择优惠券 <i class="iconfont icon-chuyidong" v-on:click="closeList"></i>
+              {{__('选择')}} {{__('优惠券')}} <i class="iconfont icon-chuyidong" v-on:click="closeList"></i>
             </div>
             <div class="full_msk_title" v-if="listType==18">
-              选择AppID <i class="iconfont icon-chuyidong" v-on:click="closeList"></i>
+              {{__('选择')}} {{__('AppID')}} <i class="iconfont icon-chuyidong" v-on:click="closeList"></i>
             </div>
             <div class="u-tableFrom" v-if="listType!=18">
-              <input type="text" name="searchProduct" v-model="searchText" placeholder="搜索关键字"
+              <input type="text" name="searchProduct" v-model="searchText" :placeholder="__('搜索关键字')"
                      maxlength="20"/>
-              <input type="button" value="搜索" :selectid="editId" :urlType="listType"
+              <input type="button" :value="__('搜索')" :selectid="editId" :urlType="listType"
                      v-on:click="searchInfo"/>
             </div>
             <div class="full_msk_table" style="height:80%">
@@ -1797,7 +1968,7 @@
                         :src="item.path || './static/diy/img/up_img.png' "
                         style="width: 80px; height: 80px;"/></div>
                       <span>{{item.name}}</span>
-                      <div><input type="button" :itemid="item.id" value="选取"
+                      <div><input type="button" :itemid="item.id" :value="__('选取')"
                                   v-on:click="useThatTplData"/>
                       </div>
                     </div>
@@ -1811,7 +1982,7 @@
                         :src="item.path || './static/diy/img/up_img.png' "/>
                       </div>
                       <span>{{item.name}}</span>
-                      <div><input type="button" :itemid="item.id" value="选取"
+                      <div><input type="button" :itemid="item.id" :value="__('选取')"
                                   v-on:click="useThatTplData"/>
                       </div>
                     </div>
@@ -1825,7 +1996,7 @@
                         :src="item.ProductTips || './static/diy/img/up_img.png' "/>
                       </div>
                       <span>{{item.name}}</span>
-                      <div><input type="button" :itemid="item.id" value="选取"
+                      <div><input type="button" :itemid="item.id" :value="__('选取')"
                                   v-on:click="useThatTplData"/>
                       </div>
                     </div>
@@ -1847,7 +2018,7 @@
                           拼团价：<em>￥{{item.ItemSalePrice}}</em>
                         </div>
                         <div class="active-select"><input type="button"
-                                                          :itemid="item.id" value="选取"
+                                                          :itemid="item.id" :value="__('选取')"
                                                           v-on:click="useThatTplData"/>
                         </div>
                       </div>
@@ -1869,7 +2040,7 @@
                           拼团价：<em>￥{{item.ItemSalePrice}}</em>
                         </div>
                         <div class="active-select"><input type="button"
-                                                          :itemid="item.id" value="选取"
+                                                          :itemid="item.id" :value="__('选取')"
                                                           v-on:click="useThatTplData"/>
                         </div>
                       </div>
@@ -1891,7 +2062,7 @@
                           秒杀价：<em>￥{{item.ItemSalePrice}}</em>
                         </div>
                         <div class="active-select"><input type="button"
-                                                          :itemid="item.id" value="选取"
+                                                          :itemid="item.id" :value="__('选取')"
                                                           v-on:click="useThatTplData"/>
                         </div>
                       </div>
@@ -1913,7 +2084,7 @@
                           底价：<em>￥{{item.ItemSalePrice}}</em>
                         </div>
                         <div class="active-select"><input type="button"
-                                                          :itemid="item.id" value="选取"
+                                                          :itemid="item.id" :value="__('选取')"
                                                           v-on:click="useThatTplData"/>
                         </div>
                       </div>
@@ -1933,7 +2104,7 @@
                           {{item.name}}
                         </div>
                         <div class="active-select"><input type="button"
-                                                          :itemid="item.id" value="选取"
+                                                          :itemid="item.id" :value="__('选取')"
                                                           v-on:click="useThatTplData"/>
                         </div>
                       </div>
@@ -1949,7 +2120,7 @@
                           <p>AppID：{{item.AppId}}</p>
                         </div>
                         <div class="active-select"><input type="button"
-                                                          :itemid="item.id" value="选取"
+                                                          :itemid="item.id" :value="__('选取')"
                                                           v-on:click="useThatTplData"/>
                         </div>
                       </div>
@@ -2012,7 +2183,7 @@
                     <td>
                       <div class="html_box" v-html="item.name"></div>
                     </td>
-                    <td><input type="button" :itemid="item.id" value="选取"
+                    <td><input type="button" :itemid="item.id" :value="__('选取')"
                                v-on:click="useThatTplData"/>
                     </td>
                   </tr>
@@ -2037,11 +2208,11 @@
             <div class="nav-tabs">
               <div class="nav-tabs-item" v-bind:class="{active:tabNum==1}" data-tabNum="1"
                    v-on:click="selectTab">
-                <label data-tabNum="1">组件样式</label>
+                <label data-tabNum="1">{{__('组件样式')}}</label>
               </div>
               <div class="nav-tabs-item" v-bind:class="{active:tabNum==2}" data-tabNum="2"
                    v-on:click="selectTab">
-                <label data-tabNum="2">组件数据</label>
+                <label data-tabNum="2">{{__('组件数据')}}</label>
               </div>
             </div>
             <!--组件样式 start-->
@@ -2049,7 +2220,7 @@
               <div class="sub-content" v-if="showTitleConfig">
                 <div class="sub-level1 box_border">
                   <div class="sub-label">
-                    文字颜色
+                    {{__('文字颜色')}}
                   </div>
                   <div class="inputicon">
                     <div class="radioBox">
@@ -2070,7 +2241,7 @@
                 </div>
                 <div class="sub-level1 box_border">
                   <div class="sub-label">
-                    背景颜色
+                    {{__('背景颜色')}}
                   </div>
                   <div class="inputicon">
                     <input type="color"
@@ -2081,7 +2252,7 @@
               <div class="sub-content" v-if="showTabBarConfig">
                 <div class="sub-level1 box_border">
                   <div class="sub-label">
-                    导航类型
+                    {{__('导航类型')}}
                   </div>
                   <div class="inputicon">
                     <div class="radioBox">
@@ -2100,7 +2271,7 @@
                 </div>
                 <div class="sub-level1 box_border">
                   <div class="sub-label">
-                    背景颜色
+                    {{__('背景颜色')}}
                   </div>
                   <div class="inputicon">
                     <input type="color" v-model="appConfig.tabBar.backgroundColor"/>
@@ -2108,7 +2279,7 @@
                 </div>
                 <div class="sub-level1 box_border">
                   <div class="sub-label ">
-                    文字颜色
+                    {{__('文字颜色')}}
                   </div>
                   <div class="inputicon">
                     <input type="color" v-model="appConfig.tabBar.color"/>
@@ -2116,7 +2287,7 @@
                 </div>
                 <div class="sub-level1 box_border">
                   <div class="sub-label ">
-                    选中文字颜色
+                    {{__('选中文字颜色')}}
                   </div>
                   <div class="inputicon">
                     <input type="color" v-model="appConfig.tabBar.selectedColor"/>
@@ -2128,7 +2299,7 @@
                 <div v-for="item in info" v-if="item.id==ckId">
                   <div class="sub-level1 box_border">
                     <div class="sub-label">
-                      背景颜色
+                      {{__('背景颜色')}}
                     </div>
                     <div class="inputicon">
                       <input type="color" v-model="item.bgColor"/>
@@ -2147,7 +2318,7 @@
                     v-if="item.eltmType!=1 && item.eltmType!=5 && item.eltmType!=8 && item.eltmType!=11 && item.eltmType!=18">
                     <div class="sub-level1 box_border">
                       <div class="sub-label">
-                        上边距
+                        {{__('上边距')}}
                       </div>
                       <div class="inputicon">
                         <input type="range"
@@ -2156,7 +2327,7 @@
                     </div>
                     <div class="sub-level1 box_border">
                       <div class="sub-label">
-                        下边距
+                        {{__('下边距')}}
                       </div>
                       <div class="inputicon">
                         <input type="range"
@@ -2165,7 +2336,7 @@
                     </div>
                     <div class="sub-level1 box_border">
                       <div class="sub-label">
-                        左边距
+                        {{__('左边距')}}
                       </div>
                       <div class="inputicon">
                         <input type="range"
@@ -2174,7 +2345,7 @@
                     </div>
                     <div class="sub-level1 box_border">
                       <div class="sub-label">
-                        右边距
+                        {{__('右边距')}}
                       </div>
                       <div class="inputicon">
                         <input type="range"
@@ -2184,7 +2355,7 @@
 
                     <div class="sub-level1 box_border">
                       <div class="sub-label">
-                        圆角
+                        {{__('圆角')}}
                       </div>
                       <div class="inputicon">
                         <input type="text" v-model="item.borderTopLeftRadius" min="0"
@@ -2208,7 +2379,7 @@
                   <div v-if="item.eltmType==13">
                     <div class="sub-level1 box_border">
                       <div class="sub-label">
-                        按钮文字
+                        {{__('按钮文字')}}
                       </div>
                       <div class="inputBox">
                         <input type="text" v-model="item.eltm13.btnText"
@@ -2217,7 +2388,7 @@
                     </div>
                     <div class="sub-level1 box_border">
                       <div class="sub-label">
-                        按钮背景颜色
+                        {{__('按钮背景颜色')}}
                       </div>
                       <div class="inputicon">
                         <input type="color" v-model="item.eltm13.btnColor"/>
@@ -2225,7 +2396,7 @@
                     </div>
                     <div class="sub-level1 box_border">
                       <div class="sub-label">
-                        按钮文字颜色
+                        {{__('按钮文字颜色')}}
                       </div>
                       <div class="inputicon">
                         <input type="color" v-model="item.eltm13.fontColor"/>
@@ -2233,7 +2404,7 @@
                     </div>
                     <div class="sub-level1 box_border">
                       <div class="sub-label">
-                        标题颜色
+                        {{__('标题颜色')}}
                       </div>
                       <div class="inputBox">
                         <input type="color" v-model="item.eltm13.labelColor"/>
@@ -2241,7 +2412,7 @@
                     </div>
                     <div class="sub-level1 box_border">
                       <div class="sub-label">
-                        文字颜色
+                        {{__('文字颜色')}}
                       </div>
                       <div class="inputBox">
                         <input type="color" v-model="item.eltm13.textColor"/>
@@ -2249,7 +2420,7 @@
                     </div>
                     <div class="sub-level1 box_border">
                       <div class="sub-label">
-                        每人提交次数
+                        {{__('每人提交次数')}}
                       </div>
                       <div class="inputBox">
                         <input type="text" v-model="item.eltm13.submitNum"
@@ -2258,7 +2429,7 @@
                     </div>
                     <div class="sub-level1 box_border">
                       <div class="sub-label">
-                        提交反馈
+                        {{__('提交反馈')}}
                       </div>
                       <div class="inputBox">
                         <input type="text" v-model="item.eltm13.btnFeedback"
@@ -2270,7 +2441,7 @@
                   <div v-if="item.eltmType==1">
                     <div class="sub-level1 box_border">
                       <div class="sub-label">
-                        对齐
+                        {{__('对齐')}}
                       </div>
                       <div class="inputicon">
                         <div class="radioBox">
@@ -2292,7 +2463,7 @@
                     <!--尺寸 start-->
                     <div class="sub-level1 box_border">
                       <div class="sub-label">
-                        尺寸(宽x高)
+                        {{__('尺寸(宽x高)')}}
                       </div>
                       <div class="minIcon">
                         <div class="inputicon">
@@ -2382,7 +2553,7 @@
 
                     <div class="sub-level1 box_border">
                       <div class="sub-label">
-                        宽度
+                        {{__('宽度')}}
                       </div>
                       <div class="inputicon">
                         <input type="range" v-model="item.eltm1.width" max="750" />{{item.eltm1.width}}px
@@ -2390,7 +2561,7 @@
                     </div>
                     <div class="sub-level1 box_border">
                       <div class="sub-label">
-                        高度
+                        {{__('高度')}}
                       </div>
                       <div class="inputicon">
                         <input type="range" v-model="item.eltm1.height"
@@ -2400,7 +2571,7 @@
 
                     <div class="sub-level1 box_border">
                       <div class="sub-label">
-                        是否需要分割线
+                        {{__('是否需要分割线')}}
                       </div>
                       <div class="inputicon">
                         <input class="weui-switch" type="checkbox"
@@ -2409,7 +2580,7 @@
                     </div>
                     <div class="sub-level1 box_border">
                       <div class="sub-label">
-                        上边距
+                        {{__('上边距')}}
                       </div>
                       <div class="inputicon">
                         <input type="range"
@@ -2418,7 +2589,7 @@
                     </div>
                     <div class="sub-level1 box_border">
                       <div class="sub-label">
-                        下边距
+                        {{__('下边距')}}
                       </div>
                       <div class="inputicon">
                         <input type="range"
@@ -2427,7 +2598,7 @@
                     </div>
                     <div class="sub-level1 box_border">
                       <div class="sub-label">
-                        左边距
+                        {{__('左边距')}}
                       </div>
                       <div class="inputicon">
                         <input type="range"
@@ -2436,7 +2607,7 @@
                     </div>
                     <div class="sub-level1 box_border">
                       <div class="sub-label">
-                        右边距
+                        {{__('右边距')}}
                       </div>
                       <div class="inputicon">
                         <input type="range"
@@ -2449,7 +2620,7 @@
                   <div v-if="item.eltmType==2">
                     <div class="sub-level1 box_border">
                       <div class="sub-label">
-                        内间距
+                        {{__('内间距')}}
                       </div>
                       <div class="inputicon">
                         <input type="range" v-model="item.eltm2.padding"
@@ -2462,7 +2633,7 @@
                   <div v-if="item.eltmType==3">
                     <div class="sub-level1 box_border">
                       <div class="sub-label">
-                        是否需要导航背景
+                        {{__('是否需要导航背景')}}
                       </div>
                       <div class="inputicon">
                         <input class="weui-switch" type="checkbox"
@@ -2472,7 +2643,7 @@
 
                     <div class="sub-level1 box_border">
                       <div class="sub-label">
-                        对齐
+                        {{__('对齐')}}
                       </div>
                       <div class="inputicon">
                         <div class="radioBox">
@@ -2496,7 +2667,7 @@
 
                     <div class="sub-level1 box_border">
                       <div class="sub-label">
-                        宽度
+                        {{__('宽度')}}
                       </div>
                       <div class="inputicon">
                         <input type="range" v-model="item.eltm3.width" max="375" />{{item.eltm3.width}}px
@@ -2504,17 +2675,17 @@
                     </div>
                     <div class="sub-level1 box_border">
                       <div class="sub-label">
-                        高度
+                        {{__('高度')}}
                       </div>
                       <div class="inputicon">
                         <input type="range" v-model="item.eltm3.height"
-                               max="375"/>{{item.eltm3.height}}px
+                               max="812"/>{{item.eltm3.height}}px
                       </div>
                     </div>
 
                     <div class="sub-level1 box_border">
                       <div class="sub-label">
-                        圆角
+                        {{__('圆角')}}
                       </div>
                       <div class="inputicon">
                         <input type="range" v-model="item.eltm3.borderRadius"
@@ -2524,7 +2695,7 @@
 
                     <div class="sub-level1 box_border">
                       <div class="sub-label">
-                        是否自动切换
+                        {{__('是否自动切换')}}
                       </div>
                       <div class="inputicon">
                         <input class="weui-switch" type="checkbox"
@@ -2534,7 +2705,7 @@
 
                     <div class="sub-level1 box_border">
                       <div class="sub-label">
-                        是否显示指示点
+                        {{__('是否显示指示点')}}
                       </div>
                       <div class="inputicon">
                         <input class="weui-switch" type="checkbox"
@@ -2545,7 +2716,7 @@
 
                     <div class="sub-level1 box_border">
                       <div class="sub-label">
-                        指示点颜色
+                        {{__('指示点颜色')}}
                       </div>
                       <div class="inputicon">
                         <input type="color" v-model="item.eltm3.color"/>
@@ -2555,7 +2726,7 @@
 
                     <div class="sub-level1 box_border">
                       <div class="sub-label">
-                        选中指示点颜色
+                        {{__('选中指示点颜色')}}
                       </div>
                       <div class="inputicon">
                         <input type="color" v-model="item.eltm3.activeColor"/>
@@ -2568,7 +2739,7 @@
                   <div v-if="item.eltmType==4">
                     <div class="sub-level1 box_border imgIcon">
                       <div class="sub-label">
-                        列表样式
+                        {{__('列表样式')}}
                       </div>
                       <div class="inputicon">
                         <div class="radioBox">
@@ -2623,14 +2794,14 @@
                     </div>
                     <div class="sub-level1 box_border">
                       <div class="sub-label">
-                        按钮样式
+                        {{__('按钮样式')}}
                       </div>
                       <div class="inputicon">
                         <div class="radioBox">
                           <input type="radio" id="Radio21"
                                  v-model="item.eltm4.btnType" value="0"/>
                           <label for="Radio21">
-                            无 </label>
+                            {{__('无')}} </label>
                         </div>
                       </div>
                       <div class="inputicon">
@@ -2676,7 +2847,7 @@
                     </div>
                     <div class="sub-level1 box_border">
                       <div class="sub-label">
-                        商品名
+                        {{__('商品名')}}
                       </div>
                       <div class="minIcon">
                         <div class="inputicon">
@@ -2684,7 +2855,7 @@
                             <input type="radio" id="Radio75"
                                    v-model="item.eltm4.charLine" value="1"/>
                             <label for="Radio75">
-                              <i>一行</i>
+                              <i>{{__('一行')}}</i>
                             </label>
                           </div>
                         </div>
@@ -2693,7 +2864,7 @@
                             <input type="radio" id="Radio76"
                                    v-model="item.eltm4.charLine" value="2"/>
                             <label for="Radio76">
-                              <i>两行</i>
+                              <i>{{__('两行')}}</i>
                             </label>
                           </div>
                         </div>
@@ -2701,7 +2872,7 @@
                     </div>
                     <div v-if="item.eltm4.btnType==4" class="sub-level1 box_border">
                       <div class="sub-label">
-                        按钮背景
+                        {{__('按钮背景')}}
                       </div>
                       <div class="inputicon">
                         <input type="color" v-model="item.eltm4.btnColor"/>
@@ -2709,7 +2880,7 @@
                     </div>
                     <div v-if="item.eltm4.btnType==4" class="sub-level1 box_border">
                       <div class="sub-label">
-                        按钮文字
+                        {{__('按钮文字')}}
                       </div>
                       <div class="inputBox">
                         <input type="text" v-model="item.eltm4.btnText"
@@ -2718,7 +2889,7 @@
                     </div>
                     <div v-if="item.eltm4.btnType==4" class="sub-level1 box_border">
                       <div class="sub-label">
-                        按钮文字颜色
+                        {{__('按钮文字颜色')}}
                       </div>
                       <div class="inputicon">
                         <input type="color" v-model="item.eltm4.btnFontColor"/>
@@ -2726,7 +2897,7 @@
                     </div>
                     <div class="sub-level1 box_border">
                       <div class="sub-label">
-                        是否展示价格
+                        {{__('是否展示价格')}}
                       </div>
                       <div class="inputicon">
                         <input class="weui-switch" type="checkbox"
@@ -2735,7 +2906,7 @@
                     </div>
                     <div class="sub-level1 box_border">
                       <div class="sub-label">
-                        是否展示卖点
+                        {{__('是否展示卖点')}}
                       </div>
                       <div class="inputicon">
                         <input class="weui-switch" type="checkbox"
@@ -2744,7 +2915,7 @@
                     </div>
                     <div class="sub-level1  box_border">
                       <div class="sub-label">
-                        价格颜色
+                        {{__('价格颜色')}}
                       </div>
                       <div class="inputicon">
                         <input type="color" v-model="item.eltm4.priceColor"/>
@@ -2756,7 +2927,7 @@
                   <div v-if="item.eltmType==5">
                     <div class="sub-level1 box_border">
                       <div class="sub-label">
-                        高度
+                        {{__('高度')}}
                       </div>
                       <div class="inputicon">
                         <input type="range"
@@ -2769,7 +2940,7 @@
                   <div v-if="item.eltmType==6">
                     <div class="sub-level1 box_border">
                       <div class="sub-label">
-                        展示类型
+                        {{__('展示类型')}}
                       </div>
                       <div class="inputicon">
                         <div class="radioBox">
@@ -2792,7 +2963,7 @@
                     <div v-if="item.eltm6.type==0">
                       <div class="sub-level1 box_border">
                         <div class="sub-label">
-                          是否滑动
+                          {{__('是否滑动')}}
                         </div>
                         <div class="inputicon">
                           <input class="weui-switch" type="checkbox" v-model="item.eltm6.isSwiper"/>
@@ -2800,7 +2971,7 @@
                       </div>
                       <div class="sub-level1  box_border">
                         <div class="sub-label">
-                          背景图片
+                          {{__('背景图片')}}
                         </div>
                         <div class="inputBox">
                           <div class="inputicon m_data_img">
@@ -2820,7 +2991,7 @@
 
                     <div v-if="item.eltm6.type==1" class="sub-level1  box_border">
                       <div class="sub-label">
-                        文字大小
+                        {{__('文字大小')}}
                       </div>
                       <div class="inputicon">
                         <input type="range" v-model="item.eltm6.fontSize" max="20"
@@ -2829,7 +3000,7 @@
                     </div>
                     <div v-if="item.eltm6.type==1" class="sub-level1  box_border">
                       <div class="sub-label">
-                        文字颜色
+                        {{__('文字颜色')}}
                       </div>
                       <div class="inputicon">
                         <input type="color" v-model="item.eltm6.fontColor"/>
@@ -2837,7 +3008,7 @@
                     </div>
                     <div class="sub-level1 box_border">
                       <div class="sub-label">
-                        上边距
+                        {{__('上边距')}}
                       </div>
                       <div class="inputicon">
                         <input type="range"
@@ -2846,7 +3017,7 @@
                     </div>
                     <div class="sub-level1 box_border">
                       <div class="sub-label">
-                        下边距
+                        {{__('下边距')}}
                       </div>
                       <div class="inputicon">
                         <input type="range"
@@ -2855,7 +3026,7 @@
                     </div>
                     <div class="sub-level1 box_border">
                       <div class="sub-label">
-                        左边距
+                        {{__('左边距')}}
                       </div>
                       <div class="inputicon">
                         <input type="range"
@@ -2864,7 +3035,7 @@
                     </div>
                     <div class="sub-level1 box_border">
                       <div class="sub-label">
-                        右边距
+                        {{__('右边距')}}
                       </div>
                       <div class="inputicon">
                         <input type="range"
@@ -2873,25 +3044,25 @@
                     </div>
                     <div class="sub-level1 box_border">
                       <div class="sub-label">
-                        宽度
+                        {{__('宽度')}}
                       </div>
                       <div class="inputicon">
                         <input type="range" v-model="item.eltm6.width"
-                               max="375"/>{{item.eltm6.width>1?item.eltm6.width+'px':'自适应'}}
+                               max="375"/>{{item.eltm6.width>1?item.eltm6.width+'px':__('自适应')}}
                       </div>
                     </div>
                     <div class="sub-level1 box_border">
                       <div class="sub-label">
-                        高度
+                        {{__('高度')}}
                       </div>
                       <div class="inputicon">
                         <input type="range" v-model="item.eltm6.height"
-                               max="375"/>{{item.eltm6.height>1?item.eltm6.height+'px':'自适应'}}
+                               max="375"/>{{item.eltm6.height>1?item.eltm6.height+'px':__('自适应')}}
                       </div>
                     </div>
                     <div class="sub-level1 box_border">
                       <div class="sub-label">
-                        水平对齐
+                        {{__('水平对齐')}}
                       </div>
                       <div class="inputicon">
                         <div class="radioBox">
@@ -2921,7 +3092,7 @@
                     <!--尺寸 start-->
                     <div class="sub-level1 box_border">
                       <div class="sub-label">
-                        垂直对齐
+                        {{__('垂直对齐')}}
                       </div>
                       <div class="minIcon">
                         <div class="inputicon">
@@ -2929,7 +3100,7 @@
                             <input type="radio" id="Radio34"
                                    v-model="item.eltm6.alignItems" value="0"/>
                             <label for="Radio34">
-                              <i>上对齐</i>
+                              <i>{{__('上对齐')}}</i>
                             </label>
                           </div>
                         </div>
@@ -2938,7 +3109,7 @@
                             <input type="radio" id="Radio35"
                                    v-model="item.eltm6.alignItems" value="1"/>
                             <label for="Radio35">
-                              <i>下对齐</i>
+                              <i>{{__('下对齐')}}</i>
                             </label>
                           </div>
                         </div>
@@ -2947,7 +3118,7 @@
                             <input type="radio" id="Radio36"
                                    v-model="item.eltm6.alignItems" value="2"/>
                             <label for="Radio36">
-                              <i>垂直居中</i>
+                              <i>{{__('垂直居中')}}</i>
                             </label>
                           </div>
                         </div>
@@ -2956,7 +3127,7 @@
                             <input type="radio" id="Radio37"
                                    v-model="item.eltm6.alignItems" value="3"/>
                             <label for="Radio37">
-                              <i>填充</i>
+                              <i>{{__('填充')}}</i>
                             </label>
                           </div>
                         </div>
@@ -2965,7 +3136,7 @@
                             <input type="radio" id="Radio38"
                                    v-model="item.eltm6.alignItems" value="4"/>
                             <label for="Radio38">
-                              <i>内容对齐</i>
+                              <i>{{__('内容对齐')}}</i>
                             </label>
                           </div>
                         </div>
@@ -2975,7 +3146,7 @@
                     <!--尺寸 start-->
                     <div class="sub-level1 box_border">
                       <div class="sub-label">
-                        排列方向
+                        {{__('排列方向')}}
                       </div>
                       <div class="minIcon">
                         <div class="inputicon">
@@ -2983,7 +3154,7 @@
                             <input type="radio" id="Radio39"
                                    v-model="item.eltm6.flexDirection" value="0"/>
                             <label for="Radio39">
-                              <i>水平从左至右</i>
+                              <i>{{__('水平从左至右')}}</i>
                             </label>
                           </div>
                         </div>
@@ -2992,7 +3163,7 @@
                             <input type="radio" id="Radio40"
                                    v-model="item.eltm6.flexDirection" value="1"/>
                             <label for="Radio40">
-                              <i>水平从右至左</i>
+                              <i>{{__('水平从右至左')}}</i>
                             </label>
                           </div>
                         </div>
@@ -3001,7 +3172,7 @@
                             <input type="radio" id="Radio41"
                                    v-model="item.eltm6.flexDirection" value="2"/>
                             <label for="Radio41">
-                              <i>垂直从上至下</i>
+                              <i>{{__('垂直从上至下')}}</i>
                             </label>
                           </div>
                         </div>
@@ -3010,7 +3181,7 @@
                             <input type="radio" id="Radio42"
                                    v-model="item.eltm6.flexDirection" value="3"/>
                             <label for="Radio42">
-                              <i>垂直从下至上</i>
+                              <i>{{__('垂直从下至上')}}</i>
                             </label>
                           </div>
                         </div>
@@ -3020,7 +3191,7 @@
                     <!--尺寸 start-->
                     <div class="sub-level1 box_border">
                       <div class="sub-label">
-                        换行参数
+                        {{__('换行参数')}}
                       </div>
                       <div class="minIcon">
                         <div class="inputicon">
@@ -3028,7 +3199,7 @@
                             <input type="radio" id="Radio43"
                                    v-model="item.eltm6.flexWrap" value="0"/>
                             <label for="Radio43">
-                              <i>不换行</i>
+                              <i>{{__('不换行')}}</i>
                             </label>
                           </div>
                         </div>
@@ -3037,7 +3208,7 @@
                             <input type="radio" id="Radio44"
                                    v-model="item.eltm6.flexWrap" value="1"/>
                             <label for="Radio44">
-                              <i>换行顺序</i>
+                              <i>{{__('换行顺序')}}</i>
                             </label>
                           </div>
                         </div>
@@ -3046,7 +3217,7 @@
                             <input type="radio" id="Radio45"
                                    v-model="item.eltm6.flexWrap" value="2"/>
                             <label for="Radio45">
-                              <i>换行倒序</i>
+                              <i>{{__('换行倒序')}}</i>
                             </label>
                           </div>
                         </div>
@@ -3059,16 +3230,16 @@
                   <div v-if="item.eltmType==7">
                     <div class="sub-level1 box_border">
                       <div class="sub-label">
-                        列数
+                        {{__('列数')}}
                       </div>
                       <div class="inputicon">
                         <input type="range" v-model="item.eltm7.column" max="5"
-                               min="1"/>{{item.eltm7.column}}列
+                               min="1"/>{{item.eltm7.column}}{{__('列')}}
                       </div>
                     </div>
                     <div class="sub-level1 box_border">
                       <div class="sub-label">
-                        是否需要分割线
+                        {{__('是否需要分割线')}}
                       </div>
                       <div class="inputicon">
                         <input class="weui-switch" type="checkbox"
@@ -3077,7 +3248,7 @@
                     </div>
                     <div class="sub-level1 box_border">
                       <div class="sub-label">
-                        上边距
+                        {{__('上边距')}}
                       </div>
                       <div class="inputicon">
                         <input type="range"
@@ -3086,7 +3257,7 @@
                     </div>
                     <div class="sub-level1 box_border">
                       <div class="sub-label">
-                        下边距
+                        {{__('下边距')}}
                       </div>
                       <div class="inputicon">
                         <input type="range"
@@ -3095,7 +3266,7 @@
                     </div>
                     <div class="sub-level1 box_border">
                       <div class="sub-label">
-                        左边距
+                        {{__('左边距')}}
                       </div>
                       <div class="inputicon">
                         <input type="range"
@@ -3104,7 +3275,7 @@
                     </div>
                     <div class="sub-level1 box_border">
                       <div class="sub-label">
-                        右边距
+                        {{__('右边距')}}
                       </div>
                       <div class="inputicon">
                         <input type="range"
@@ -3117,7 +3288,7 @@
                   <div v-if="item.eltmType==8">
                     <div class="sub-level1  box_border">
                       <div class="sub-label">
-                        图标颜色
+                        {{__('图标颜色')}}
                       </div>
                       <div class="inputicon">
                         <input type="color" v-model="item.eltm8.fontColor"/>
@@ -3125,7 +3296,7 @@
                     </div>
                     <div class="sub-level1 box_border">
                       <div class="sub-label">
-                        电话号码
+                        {{__('电话号码')}}
                       </div>
                       <div class="inputBox">
                         <input type="text" v-model="item.eltm8.tel" maxlength="20"/>
@@ -3137,7 +3308,7 @@
                   <div v-if="item.eltmType==11">
                     <div class="sub-level1  box_border">
                       <div class="sub-label">
-                        图标颜色
+                        {{__('图标颜色')}}
                       </div>
                       <div class="inputicon">
                         <input type="color" v-model="item.eltm11.fontColor"/>
@@ -3149,7 +3320,7 @@
                   <div v-if="item.eltmType==9">
                     <div class="sub-level1 box_border">
                       <div class="sub-label">
-                        上边距
+                        {{__('上边距')}}
                       </div>
                       <div class="inputicon">
                         <input type="range"
@@ -3158,7 +3329,7 @@
                     </div>
                     <div class="sub-level1 box_border">
                       <div class="sub-label">
-                        下边距
+                        {{__('下边距')}}
                       </div>
                       <div class="inputicon">
                         <input type="range"
@@ -3167,7 +3338,7 @@
                     </div>
                     <div class="sub-level1 box_border">
                       <div class="sub-label">
-                        左边距
+                        {{__('左边距')}}
                       </div>
                       <div class="inputicon">
                         <input type="range"
@@ -3176,7 +3347,7 @@
                     </div>
                     <div class="sub-level1 box_border">
                       <div class="sub-label">
-                        右边距
+                        {{__('右边距')}}
                       </div>
                       <div class="inputicon">
                         <input type="range"
@@ -3185,7 +3356,7 @@
                     </div>
                     <div class="sub-level1 box_border">
                       <div class="sub-label">
-                        提示内容
+                        {{__('提示内容')}}
                       </div>
                       <div class="inputBox">
                         <input type="text" v-model="item.eltm9.tipText"
@@ -3198,7 +3369,7 @@
                   <div v-if="item.eltmType==18">
                     <div class="sub-level1 box_border">
                       <div class="sub-label">
-                        上边距
+                        {{__('上边距')}}
                       </div>
                       <div class="inputicon">
                         <input type="range"
@@ -3207,7 +3378,7 @@
                     </div>
                     <div class="sub-level1 box_border">
                       <div class="sub-label">
-                        下边距
+                        {{__('下边距')}}
                       </div>
                       <div class="inputicon">
                         <input type="range"
@@ -3220,7 +3391,7 @@
                   <div v-if="item.eltmType==12" data-FeatureKey="VideoCnt">
                     <div class="sub-level1 box_border">
                       <div class="sub-label">
-                        视频地址
+                        {{__('视频地址')}}
                       </div>
                       <div class="inputBox">
                         <input type="text" v-model="item.eltm12.src" maxlength="500"/>
@@ -3228,7 +3399,7 @@
                     </div>
                     <div class="sub-level1  box_border">
                       <div class="sub-label">
-                        视频封面
+                        {{__('视频封面')}}
                       </div>
                       <div class="inputBox">
                         <div class="inputicon m_data_img">
@@ -3244,7 +3415,7 @@
                     </div>
                     <div class="sub-level1  box_border">
                       <div class="sub-label">
-                        进度条
+                        {{__('进度条')}}
                       </div>
                       <div class="inputicon">
                         <input class="weui-switch" type="checkbox"
@@ -3253,7 +3424,7 @@
                     </div>
                     <div class="sub-level1  box_border">
                       <div class="sub-label">
-                        自动播放
+                        {{__('自动播放')}}
                       </div>
                       <div class="inputicon">
                         <input class="weui-switch" type="checkbox"
@@ -3262,7 +3433,7 @@
                     </div>
                     <div class="sub-level1  box_border">
                       <div class="sub-label">
-                        循环播放
+                        {{__('循环播放')}}
                       </div>
                       <div class="inputicon">
                         <input class="weui-switch" type="checkbox"
@@ -3271,7 +3442,7 @@
                     </div>
                     <div class="sub-level1 box_border">
                       <div class="sub-label">
-                        宽度
+                        {{__('宽度')}}
                       </div>
                       <div class="inputicon">
                         <input type="range" v-model="item.eltm12.width"
@@ -3280,7 +3451,7 @@
                     </div>
                     <div class="sub-level1 box_border">
                       <div class="sub-label">
-                        高度
+                        {{__('高度')}}
                       </div>
                       <div class="inputicon">
                         <input type="range" v-model="item.eltm12.height"
@@ -3289,7 +3460,7 @@
                     </div>
                     <div class="sub-level1 box_border">
                       <div class="sub-label">
-                        上边距
+                        {{__('上边距')}}
                       </div>
                       <div class="inputicon">
                         <input type="range"
@@ -3298,7 +3469,7 @@
                     </div>
                     <div class="sub-level1 box_border">
                       <div class="sub-label">
-                        下边距
+                        {{__('下边距')}}
                       </div>
                       <div class="inputicon">
                         <input type="range"
@@ -3307,7 +3478,7 @@
                     </div>
                     <div class="sub-level1 box_border">
                       <div class="sub-label">
-                        左边距
+                        {{__('左边距')}}
                       </div>
                       <div class="inputicon">
                         <input type="range"
@@ -3316,7 +3487,7 @@
                     </div>
                     <div class="sub-level1 box_border">
                       <div class="sub-label">
-                        右边距
+                        {{__('右边距')}}
                       </div>
                       <div class="inputicon">
                         <input type="range"
@@ -3329,7 +3500,7 @@
                   <div v-if="item.eltmType==14">
                     <div class="sub-level1 box_border">
                       <div class="sub-label">
-                        滚动方向
+                        {{__('滚动方向')}}
                       </div>
                       <div class="minIcon">
                         <div class="inputicon">
@@ -3337,7 +3508,7 @@
                             <input type="radio" id="Radio68"
                                    v-model="item.eltm14.scrollDir" value="0"/>
                             <label for="Radio68">
-                              <i>上下滚动</i>
+                              <i>{{__('上下滚动')}}</i>
                             </label>
                           </div>
                         </div>
@@ -3346,7 +3517,7 @@
                             <input type="radio" id="Radio69"
                                    v-model="item.eltm14.scrollDir" value="1"/>
                             <label for="Radio69">
-                              <i>左右滚动</i>
+                              <i>{{__('左右滚动')}}</i>
                             </label>
                           </div>
                         </div>
@@ -3354,7 +3525,7 @@
                     </div>
                     <div class="sub-level1 box_border">
                       <div class="sub-label">
-                        公告图标
+                        {{__('公告图标')}}
                       </div>
                       <div class="inputicon m_data_img"><span v-if="isUploadImage">
 															<input type="file" name="upfile" :id="'File'+item.id"
@@ -3370,7 +3541,7 @@
                     </div>
                     <div class="sub-level1  box_border">
                       <div class="sub-label">
-                        文字颜色
+                        {{__('文字颜色')}}
                       </div>
                       <div class="inputicon">
                         <input type="color" v-model="item.eltm14.fontColor"/>
@@ -3378,7 +3549,7 @@
                     </div>
                     <div class="sub-level1  box_border">
                       <div class="sub-label">
-                        箭头颜色
+                        {{__('箭头颜色')}}
                       </div>
                       <div class="inputicon">
                         <input type="color" v-model="item.eltm14.arrowColor"/>
@@ -3386,7 +3557,7 @@
                     </div>
                     <div class="sub-level1 box_border">
                       <div class="sub-label">
-                        上边距
+                        {{__('上边距')}}
                       </div>
                       <div class="inputicon">
                         <input type="range"
@@ -3395,7 +3566,7 @@
                     </div>
                     <div class="sub-level1 box_border">
                       <div class="sub-label">
-                        下边距
+                        {{__('下边距')}}
                       </div>
                       <div class="inputicon">
                         <input type="range"
@@ -3408,7 +3579,7 @@
                   <div v-if="item.eltmType==15">
                     <div class="sub-level1 box_border">
                       <div class="sub-label">
-                        标题名称
+                        {{__('标题名称')}}
                       </div>
                       <div class="inputBox">
                         <input type="text" v-model="item.eltm15.title" maxlength="20"/>
@@ -3416,7 +3587,7 @@
                     </div>
                     <div class="sub-level1  box_border">
                       <div class="sub-label">
-                        标题颜色
+                        {{__('标题颜色')}}
                       </div>
                       <div class="inputicon">
                         <input type="color" v-model="item.eltm15.titleColor"/>
@@ -3424,7 +3595,7 @@
                     </div>
                     <div class="sub-level1  box_border">
                       <div class="sub-label">
-                        是否启用图标
+                        {{__('是否启用图标')}}
                       </div>
                       <div class="inputicon">
                         <input class="weui-switch" type="checkbox"
@@ -3433,7 +3604,7 @@
                     </div>
                     <div class="sub-level1 box_border">
                       <div class="sub-label">
-                        标题图标
+                        {{__('标题图标')}}
                       </div>
                       <div class="inputicon m_data_img"><span v-if="isUploadImage">
 															<input type="file" name="upfile" :id="'File'+item.id"
@@ -3448,7 +3619,7 @@
                     </div>
                     <div class="sub-level1  box_border">
                       <div class="sub-label">
-                        是否启用链接
+                        {{__('是否启用链接')}}
                       </div>
                       <div class="inputicon">
                         <input class="weui-switch" type="checkbox"
@@ -3457,7 +3628,7 @@
                     </div>
                     <div class="sub-level1 box_border">
                       <div class="sub-label">
-                        链接文字
+                        {{__('链接文字')}}
                       </div>
                       <div class="inputBox">
                         <input type="text" v-model="item.eltm15.linkText"
@@ -3466,7 +3637,7 @@
                     </div>
                     <div class="sub-level1  box_border">
                       <div class="sub-label">
-                        文字颜色
+                        {{__('文字颜色')}}
                       </div>
                       <div class="inputicon">
                         <input type="color" v-model="item.eltm15.fontColor"/>
@@ -3474,7 +3645,7 @@
                     </div>
                     <div class="sub-level1  box_border">
                       <div class="sub-label">
-                        箭头颜色
+                        {{__('箭头颜色')}}
                       </div>
                       <div class="inputicon">
                         <input type="color" v-model="item.eltm15.arrowColor"/>
@@ -3482,7 +3653,7 @@
                     </div>
                     <div class="sub-level1  box_border">
                       <div class="sub-label">
-                        是否启用倒计时
+                        {{__('是否启用倒计时')}}
                       </div>
                       <div class="inputicon">
                         <input class="weui-switch" type="checkbox"
@@ -3491,7 +3662,7 @@
                     </div>
                     <div class="sub-level1 box_border" v-if="item.eltm15.isCountdown">
                       <div class="sub-label">
-                        时间组件样式
+                        {{__('时间组件样式')}}
                       </div>
                       <div class="minIcon">
                         <div class="inputicon">
@@ -3499,7 +3670,7 @@
                             <input type="radio" id="Radio62"
                                    v-model="item.eltm15.cssType" value="1"/>
                             <label for="Radio62">
-                              <i>样式1</i>
+                              <i>{{__('样式1')}}</i>
                             </label>
                           </div>
                         </div>
@@ -3508,7 +3679,7 @@
                             <input type="radio" id="Radio63"
                                    v-model="item.eltm15.cssType" value="2"/>
                             <label for="Radio63">
-                              <i>样式2</i>
+                              <i>{{__('样式2')}}</i>
                             </label>
                           </div>
                         </div>
@@ -3516,7 +3687,7 @@
                     </div>
                     <div class="sub-level1 box_border" v-if="item.eltm15.isCountdown">
                       <div class="sub-label">
-                        开始时间
+                        {{__('开始时间')}}
                       </div>
                       <div class="inputBox">
                         <input type="text" v-model="item.eltm15.startTime"
@@ -3528,7 +3699,7 @@
                     </div>
                     <div class="sub-level1 box_border" v-if="item.eltm15.isCountdown">
                       <div class="sub-label">
-                        结束时间
+                        {{__('结束时间')}}
                       </div>
                       <div class="inputBox">
                         <input type="text" v-model="item.eltm15.endTime" id="txtEndTime"
@@ -3539,7 +3710,7 @@
                     </div>
                     <div class="sub-level1 box_border">
                       <div class="sub-label">
-                        上边距
+                        {{__('上边距')}}
                       </div>
                       <div class="inputicon">
                         <input type="range"
@@ -3548,7 +3719,7 @@
                     </div>
                     <div class="sub-level1 box_border">
                       <div class="sub-label">
-                        下边距
+                        {{__('下边距')}}
                       </div>
                       <div class="inputicon">
                         <input type="range"
@@ -3561,7 +3732,7 @@
                   <div v-if="item.eltmType==16">
                     <div class="sub-level1 box_border imgIcon">
                       <div class="sub-label">
-                        列表样式
+                        {{__('列表样式')}}
                       </div>
                       <div class="inputicon">
                         <div class="radioBox">
@@ -3596,7 +3767,7 @@
                     </div>
                     <div class="sub-level1  box_border">
                       <div class="sub-label">
-                        是否展示标签
+                        {{__('是否展示标签')}}
                       </div>
                       <div class="inputicon">
                         <input class="weui-switch" type="checkbox"
@@ -3605,7 +3776,7 @@
                     </div>
                     <div class="sub-level1  box_border">
                       <div class="sub-label">
-                        是否展示商品名
+                        {{__('是否展示商品名')}}
                       </div>
                       <div class="inputicon">
                         <input class="weui-switch" type="checkbox"
@@ -3614,7 +3785,7 @@
                     </div>
                     <div class="sub-level1  box_border">
                       <div class="sub-label">
-                        是否展示商品价格
+                        {{__('是否展示商品价格')}}
                       </div>
                       <div class="inputicon">
                         <input class="weui-switch" type="checkbox"
@@ -3623,7 +3794,7 @@
                     </div>
                     <div class="sub-level1  box_border">
                       <div class="sub-label">
-                        是否展示参与人数
+                        {{__('是否展示参与人数')}}
                       </div>
                       <div class="inputicon">
                         <input class="weui-switch" type="checkbox"
@@ -3632,7 +3803,7 @@
                     </div>
                     <div class="sub-level1  box_border">
                       <div class="sub-label">
-                        价格颜色
+                        {{__('价格颜色')}}
                       </div>
                       <div class="inputicon">
                         <input type="color" v-model="item.eltm16.priceColor"/>
@@ -3642,7 +3813,7 @@
                     <div v-if="item.eltm16.layout==3">
                       <div class="sub-level1  box_border">
                         <div class="sub-label">
-                          按钮背景颜色
+                          {{__('按钮背景颜色')}}
                         </div>
                         <div class="inputicon">
                           <input type="color" v-model="item.eltm16.btnBgColor"/>
@@ -3650,7 +3821,7 @@
                       </div>
                       <div class="sub-level1  box_border">
                         <div class="sub-label">
-                          按钮文字颜色
+                          {{__('按钮文字颜色')}}
                         </div>
                         <div class="inputicon">
                           <input type="color" v-model="item.eltm16.btnFontColor"/>
@@ -3660,7 +3831,7 @@
 
                     <div class="sub-level1  box_border">
                       <div class="sub-label">
-                        是否启用倒计时
+                        {{__('是否启用倒计时')}}
                       </div>
                       <div class="inputicon">
                         <input class="weui-switch" type="checkbox"
@@ -3669,7 +3840,7 @@
                     </div>
                     <div class="sub-level1  box_border" v-if="item.eltm16.isCountdown">
                       <div class="sub-label">
-                        倒计时背景颜色
+                        {{__('倒计时背景颜色')}}
                       </div>
                       <div class="inputicon">
                         <input type="color" v-model="item.eltm16.countdownBgColor"/>
@@ -3677,7 +3848,7 @@
                     </div>
                     <div class="sub-level1  box_border" v-if="item.eltm16.isCountdown">
                       <div class="sub-label">
-                        倒计时文字颜色
+                        {{__('倒计时文字颜色')}}
                       </div>
                       <div class="inputicon">
                         <input type="color" v-model="item.eltm16.countdownFontColor"/>
@@ -3685,7 +3856,7 @@
                     </div>
                     <div class="sub-level1 box_border">
                       <div class="sub-label">
-                        商品名
+                        {{__('商品名')}}
                       </div>
                       <div class="minIcon">
                         <div class="inputicon">
@@ -3693,7 +3864,7 @@
                             <input type="radio" id="Radio67"
                                    v-model="item.eltm16.charLine" value="1"/>
                             <label for="Radio67">
-                              <i>一行</i>
+                              <i>{{__('一行')}}</i>
                             </label>
                           </div>
                         </div>
@@ -3702,7 +3873,7 @@
                             <input type="radio" id="Radio70"
                                    v-model="item.eltm16.charLine" value="2"/>
                             <label for="Radio70">
-                              <i>两行</i>
+                              <i>{{__('两行')}}</i>
                             </label>
                           </div>
                         </div>
@@ -3710,7 +3881,7 @@
                     </div>
                     <div class="sub-level1 box_border">
                       <div class="sub-label">
-                        上边距
+                        {{__('上边距')}}
                       </div>
                       <div class="inputicon">
                         <input type="range"
@@ -3719,7 +3890,7 @@
                     </div>
                     <div class="sub-level1 box_border">
                       <div class="sub-label">
-                        下边距
+                        {{__('下边距')}}
                       </div>
                       <div class="inputicon">
                         <input type="range"
@@ -3732,7 +3903,7 @@
                   <div v-if="item.eltmType==17">
                     <div class="sub-level1 box_border">
                       <div class="sub-label">
-                        展示类型
+                        {{__('展示类型')}}
                       </div>
                       <div class="inputicon">
                         <div class="radioBox">
@@ -3753,7 +3924,7 @@
                     </div>
                     <div class="sub-level1 box_border">
                       <div class="sub-label">
-                        上边距
+                        {{__('上边距')}}
                       </div>
                       <div class="inputicon">
                         <input type="range"
@@ -3762,7 +3933,7 @@
                     </div>
                     <div class="sub-level1 box_border">
                       <div class="sub-label">
-                        下边距
+                        {{__('下边距')}}
                       </div>
                       <div class="inputicon">
                         <input type="range"
@@ -3777,7 +3948,7 @@
 
                     <div class="sub-level1 box_border">
                       <div class="sub-label">
-                        是否展示过滤框
+                        {{__('是否展示过滤框')}}
                       </div>
                       <div class="inputicon">
                         <input class="weui-switch" type="checkbox"
@@ -3787,7 +3958,7 @@
 
                     <div class="sub-level1 box_border">
                       <div class="sub-label">
-                        是否展示加载状态
+                        {{__('是否展示加载状态')}}
                       </div>
                       <div class="inputicon">
                         <input class="weui-switch" type="checkbox"
@@ -3797,7 +3968,7 @@
 
                     <div class="sub-level1 box_border">
                       <div class="sub-label">
-                        商品展示
+                        {{__('商品展示')}}
                       </div>
                       <div class="minIcon">
                         <div class="inputicon">
@@ -3805,7 +3976,7 @@
                             <input type="radio" id="Radio101"
                                    v-model="item.eltm101.viewtype" value="1"/>
                             <label for="Radio101">
-                              <i>块状</i>
+                              <i>{{__('块状')}}</i>
                             </label>
                           </div>
                         </div>
@@ -3814,7 +3985,7 @@
                             <input type="radio" id="Radio102"
                                    v-model="item.eltm101.viewtype" value="0"/>
                             <label for="Radio102">
-                              <i>列表</i>
+                              <i>{{__('列表')}}</i>
                             </label>
                           </div>
                         </div>
@@ -3823,7 +3994,7 @@
 
                     <div class="sub-level1 box_border">
                       <div class="sub-label">
-                        标题名称
+                        {{__('标题名称')}}
                       </div>
                       <div class="inputBox">
                         <input type="text" v-model="item.eltm101.title"
@@ -3832,7 +4003,7 @@
                     </div>
                     <div class="sub-level1  box_border">
                       <div class="sub-label">
-                        标题颜色
+                        {{__('标题颜色')}}
                       </div>
                       <div class="inputicon">
                         <input type="color" v-model="item.eltm101.titleColor"/>
@@ -3841,7 +4012,7 @@
 
                     <div class="sub-level1 box_border">
                       <div class="sub-label">
-                        过滤选项
+                        {{__('过滤选项')}}
                       </div>
                       <div class="inputBox">
                         <input type="text" v-model="item.eltm101.options"/>
@@ -3936,7 +4107,7 @@
 
                     <div class="sub-level1 box_border">
                       <div class="sub-label">
-                        是否展示过滤框
+                        {{__('是否展示过滤框')}}
                       </div>
                       <div class="inputicon">
                         <input class="weui-switch" type="checkbox"
@@ -3946,7 +4117,7 @@
 
                     <div class="sub-level1 box_border">
                       <div class="sub-label">
-                        是否展示加载状态
+                        {{__('是否展示加载状态')}}
                       </div>
                       <div class="inputicon">
                         <input class="weui-switch" type="checkbox"
@@ -3956,7 +4127,7 @@
 
                     <div class="sub-level1 box_border">
                       <div class="sub-label">
-                        商品展示
+                        {{__('商品展示')}}
                       </div>
                       <div class="minIcon">
                         <div class="inputicon">
@@ -3964,7 +4135,7 @@
                             <input type="radio" id="Radio105"
                                    v-model="item.eltm103.viewtype" value="1"/>
                             <label for="Radio105">
-                              <i>块状</i>
+                              <i>{{__('块状')}}</i>
                             </label>
                           </div>
                         </div>
@@ -3973,7 +4144,7 @@
                             <input type="radio" id="Radio106"
                                    v-model="item.eltm103.viewtype" value="0"/>
                             <label for="Radio106">
-                              <i>列表</i>
+                              <i>{{__('列表')}}</i>
                             </label>
                           </div>
                         </div>
@@ -3982,7 +4153,7 @@
 
                     <div class="sub-level1 box_border">
                       <div class="sub-label">
-                        标题名称
+                        {{__('标题名称')}}
                       </div>
                       <div class="inputBox">
                         <input type="text" v-model="item.eltm103.title"
@@ -3991,7 +4162,7 @@
                     </div>
                     <div class="sub-level1  box_border">
                       <div class="sub-label">
-                        标题颜色
+                        {{__('标题颜色')}}
                       </div>
                       <div class="inputicon">
                         <input type="color" v-model="item.eltm103.titleColor"/>
@@ -4000,7 +4171,7 @@
 
                     <div class="sub-level1 box_border">
                       <div class="sub-label">
-                        过滤选项
+                        {{__('过滤选项')}}
                       </div>
                       <div class="inputBox">
                         <input type="text" v-model="item.eltm103.options"/>
@@ -4014,7 +4185,7 @@
                   <div v-if="item.eltmType==104">
                     <div class="sub-level1 box_border">
                       <div class="sub-label">
-                        是否展示过滤价格
+                        {{__('是否展示过滤价格')}}
                       </div>
                       <div class="inputicon">
                         <input class="weui-switch" type="checkbox"
@@ -4023,7 +4194,7 @@
                     </div>
                     <div v-if="false" class="sub-level1 box_border">
                       <div class="sub-label">
-                        是否展示加载状态
+                        {{__('是否展示加载状态')}}
                       </div>
                       <div class="inputicon">
                         <input class="weui-switch" type="checkbox"
@@ -4033,7 +4204,7 @@
 
                     <div v-if="false" class="sub-level1 box_border">
                       <div class="sub-label">
-                        价格区域选项
+                        {{__('价格区域选项')}}
                       </div>
                       <div class="inputBox">
                         <input type="text" v-model="item.eltm104.title"/>
@@ -4042,7 +4213,7 @@
 
                     <div v-if="false" class="sub-level1 box_border">
                       <div class="sub-label">
-                        排序选项
+                        {{__('排序选项')}}
                       </div>
                       <div class="inputBox">
                         <input type="text" v-model="item.eltm104.options"/>
@@ -4060,28 +4231,28 @@
               <div class="sub-content" v-if="modelType==10 && showPageConfig">
                 <div class="sub-level1 box_border">
                   <div class="sub-label">
-                    背景类型
+                    {{__('背景类型')}}
                   </div>
                   <div class="minIcon">
                     <div class="inputicon">
                       <div class="radioBox">
                         <input type="radio" id="Radio47"
                                v-model="PageConfig.BackgroundObj.type" value="1"/>
-                        <label for="Radio47"><i>背景颜色</i></label>
+                        <label for="Radio47"><i>{{__('背景颜色')}}</i></label>
                       </div>
                     </div>
                     <div class="inputicon">
                       <div class="radioBox">
                         <input type="radio" id="Radio46"
                                v-model="PageConfig.BackgroundObj.type" value="0"/>
-                        <label for="Radio46"><i>背景图片</i></label>
+                        <label for="Radio46"><i>{{__('背景图片')}}</i></label>
                       </div>
                     </div>
                   </div>
                 </div>
                 <div class="sub-level1 box_border" v-if="PageConfig.BackgroundObj.type==1">
                   <div class="sub-label">
-                    背景颜色
+                    {{__('背景颜色')}}
                   </div>
                   <div class="inputicon">
                     <input type="color" v-model="PageConfig.BackgroundObj.bgColor"/>
@@ -4090,7 +4261,7 @@
                 <div v-if="PageConfig.BackgroundObj.type==0">
                   <div class="sub-level1 box_border">
                     <div class="sub-label">
-                      图片补全背景
+                      {{__('图片补全背景')}}
                     </div>
                     <div class="inputicon">
                       <input type="color" v-model="PageConfig.BackgroundObj.pathColor"/>
@@ -4098,7 +4269,7 @@
                   </div>
                   <div class="sub-level1 box_border">
                     <div class="sub-label">
-                      背景图片
+                      {{__('背景图片')}}
                     </div>
                     <div class="inputicon m_data_img"
                          style="width:200px !important;height:355px !important;">
@@ -4123,7 +4294,7 @@
               <div v-if="tabNum==2 && showTabBarConfig">
                 <div class="expand_menu_box" v-for="(item,index) in appConfig.tabBar.list">
                   <div class="sub-level-title" v-on:click.stop="expandMenu">
-                    第{{index+1}}项 <i class="iconfont icon-moreunfold"></i>
+                    {{sprintf(__('第 %s 项'), (index+1))}} <i class="iconfont icon-moreunfold"></i>
                     <i class="iconfont icon-icon-del-copy" :tabBarIndex="index"
                        v-if="index!=0" v-on:click="removeTabBar"></i>
                   </div>
@@ -4131,7 +4302,7 @@
 
                     <div class="sub-level1 box_border">
                       <div class="sub-label">
-                        未选中图标
+                        {{__('未选中图标')}}
                       </div>
                       <div class="inputicon m_data_img">
 														<span v-if="isUploadImage">
@@ -4145,7 +4316,7 @@
                     </div>
                     <div class="sub-level1 box_border">
                       <div class="sub-label">
-                        选中的图标
+                        {{__('选中的图标')}}
                       </div>
                       <div class="inputicon m_data_img">
 														<span v-if="isUploadImage">
@@ -4160,31 +4331,31 @@
                     </div>
                     <div class="sub-level1 box_border">
                       <div class="sub-label">
-                        选择地址
+                        {{__('选择地址')}}
                       </div>
                       <div class="inputBox">
                         <input type="text" v-model="item.text" placeholder="连接地址"
                                maxlength="100" style="width:200px "/>
                         <a href="javascript:void(0)" v-on:click="getModuleTplData"
-                           :selectid="index" :urlType="7" v-if="index!=0">选择</a>
+                           :selectid="index" :urlType="7" v-if="index!=0">{{__('选择')}}</a>
                       </div>
                     </div>
                     <div class="sub-level1 box_border"
                          v-if="item.pagePath.indexOf('navigationpage')>-1">
                       <div class="sub-label">
-                        选择页面
+                        {{__('选择页面')}}
                       </div>
                       <div class="inputBox">
                         <input type="text" v-model="DiyHomeName" placeholder="选择页面地址"
                                maxlength="100" style="width:200px "/>
                         <a href="javascript:void(0)" v-on:click="getModuleTplData"
-                           :selectid="0" :urlType="8">选择</a>
+                           :selectid="0" :urlType="8">{{__('选择')}}</a>
                       </div>
                     </div>
                   </div>
                 </div>
                 <div class="msk_add_ad" v-on:click="addTabBar">
-                  <label></label>添加
+                  <label></label>{{__('添加')}}
                 </div>
               </div>
               <div v-if="tabNum==2 && !showTitleConfig && !showTabBarConfig">
@@ -4192,7 +4363,7 @@
                   <!--尺寸 start-->
                   <div class="sub-level1 box_border">
                     <div class="sub-label">
-                      链接地址
+                      {{__('链接地址')}}
                     </div>
                     <div class="minIcon">
                       <div class="inputicon">
@@ -4200,7 +4371,7 @@
                           <input type="radio" id="Radio48"
                                  v-model="mskData.selectType" value="0"/>
                           <label for="Radio48">
-                            <i>无链接</i>
+                            <i>{{__('无链接')}}</i>
                           </label>
                         </div>
                       </div>
@@ -4209,7 +4380,7 @@
                           <input type="radio" id="Radio27"
                                  v-model="mskData.selectType" value="1"/>
                           <label for="Radio27">
-                            <i>商品</i>
+                            <i>{{__('商品')}}</i>
                           </label>
                         </div>
                       </div>
@@ -4218,7 +4389,7 @@
                           <input type="radio" id="Radio28"
                                  v-model="mskData.selectType" value="2"/>
                           <label for="Radio28">
-                            <i>分类</i>
+                            <i>{{__('分类')}}</i>
                           </label>
                         </div>
                       </div>
@@ -4227,7 +4398,7 @@
                           <input type="radio" id="Radio29"
                                  v-model="mskData.selectType" value="3"/>
                           <label for="Radio29">
-                            <i>搜索</i>
+                            <i>{{__('搜索')}}</i>
                           </label>
                         </div>
                       </div>
@@ -4236,7 +4407,7 @@
                           <input type="radio" id="Radio30"
                                  v-model="mskData.selectType" value="4"/>
                           <label for="Radio30">
-                            <i>快捷入口</i>
+                            <i>{{__('快捷入口')}}</i>
                           </label>
                         </div>
                       </div>
@@ -4245,7 +4416,7 @@
                           <input type="radio" id="Radio31"
                                  v-model="mskData.selectType" value="5"/>
                           <label for="Radio31">
-                            <i>资讯分类</i>
+                            <i>{{__('资讯分类')}}</i>
                           </label>
                         </div>
                       </div>
@@ -4254,7 +4425,7 @@
                           <input type="radio" id="Radio32"
                                  v-model="mskData.selectType" value="6"/>
                           <label for="Radio32">
-                            <i>资讯</i>
+                            <i>{{__('资讯')}}</i>
                           </label>
                         </div>
                       </div>
@@ -4263,7 +4434,7 @@
                           <input type="radio" id="Radio33"
                                  v-model="mskData.selectType" value="7"/>
                           <label for="Radio33">
-                            <i>小程序</i>
+                            <i>{{__('小程序')}}</i>
                           </label>
                         </div>
                       </div>
@@ -4273,7 +4444,7 @@
                           <input type="radio" id="Radio49"
                                  v-model="mskData.selectType" value="8"/>
                           <label for="Radio49">
-                            <i>自定义页面</i>
+                            <i>{{__('自定义页面')}}</i>
                           </label>
                         </div>
                       </div>
@@ -4282,7 +4453,7 @@
                           <input type="radio" id="Radio50"
                                  v-model="mskData.selectType" value="9"/>
                           <label for="Radio50">
-                            <i>网页地址</i>
+                            <i>{{__('网页地址')}}</i>
                           </label>
                         </div>
                       </div>
@@ -4293,7 +4464,7 @@
                           <input type="radio" id="Radio59"
                                  v-model="mskData.selectType" value="10"/>
                           <label for="Radio59">
-                            <i>社区板块</i>
+                            <i>{{__('社区板块')}}</i>
                           </label>
                         </div>
                       </div>
@@ -4303,7 +4474,7 @@
                           <input type="radio" id="Radio60"
                                  v-model="mskData.selectType" value="11"/>
                           <label for="Radio60">
-                            <i>社区帖子</i>
+                            <i>{{__('社区帖子')}}</i>
                           </label>
                         </div>
                       </div>
@@ -4312,7 +4483,7 @@
                           <input type="radio" id="Radio61"
                                  v-model="mskData.selectType" value="12"/>
                           <label for="Radio61">
-                            <i>拨打电话</i>
+                            <i>{{__('拨打电话')}}</i>
                           </label>
                         </div>
                       </div>
@@ -4321,7 +4492,7 @@
                           <input type="radio" id="Radio73"
                                  v-model="mskData.selectType" value="17"/>
                           <label for="Radio73">
-                            <i>优惠券</i>
+                            <i>{{__('优惠券')}}</i>
                           </label>
                         </div>
                       </div>
@@ -4331,7 +4502,7 @@
                   <!--设置 start-->
                   <div class="sub-level1 box_border" v-if="mskData.selectType==3">
                     <div class="sub-label">
-                      搜索关键字
+                      {{__('搜索关键字')}}
                     </div>
                     <div class="inputBox">
                       <input maxlength="20" type="text" placeholder="请输入搜索关键字"
@@ -4349,7 +4520,7 @@
                   </div>
                   <div class="sub-level1 box_border" v-if="mskData.selectType==7 ">
                     <div class="sub-label">
-                      小程序跳转地址
+                      {{__('小程序跳转地址')}}
                     </div>
                     <div class="inputBox">
                       <input type="text" v-model="mskData.AppUrl" placeholder="小程序跳转地址"
@@ -4359,7 +4530,7 @@
                   <div class="sub-level1 box_border"
                        v-if="mskData.selectType==7 || mskData.selectType==3">
                     <div class="sub-label">
-                      名称
+                      {{__('名称')}}
                     </div>
                     <div class="inputBox">
                       <input type="text" v-model="mskData.name" placeholder="请输入名称"
@@ -4371,12 +4542,12 @@
                       <div class="inputBox inputBtn" style="display:grid;">
                         <input type="button" v-on:click="getModuleTplData"
                                :selectid="mskData.id" :urlType="mskData.selectType"
-                               value="选择商品">
+                               :value="__('选择商品')">
                       </div>
                     </div>
                     <div class="sub-level1 box_border">
                       <div class="sub-label">
-                        名称
+                        {{__('名称')}}
                       </div>
                       <div class="inputBox">
                         <input type="text" v-model="mskData.name" placeholder="请输入名称"
@@ -4385,7 +4556,7 @@
                     </div>
                     <div class="sub-level1 box_border">
                       <div class="sub-label">
-                        卖点
+                        {{__('卖点')}}
                       </div>
                       <div class="inputBox">
                         <input type="text" v-model="mskData.ProductTips"
@@ -4394,7 +4565,7 @@
                     </div>
                     <div class="sub-level1 box_border">
                       <div class="sub-label">
-                        价格(元)
+                        {{__('价格(元)')}}
                       </div>
                       <div class="inputBox">
                         <input type="text" v-model="mskData.ItemSalePrice"
@@ -4405,37 +4576,37 @@
                   <div class="sub-level1 box_border"
                        v-if="mskData.selectType!=1 && mskData.selectType!=3 && mskData.selectType!=7 && mskData.selectType!=0">
                     <div class="sub-label" v-if="mskData.selectType==2">
-                      选择分类地址
+                      {{__('选择分类地址')}}
                     </div>
                     <div class="sub-label" v-if="mskData.selectType==4">
-                      选择快捷入口地址
+                      {{__('选择快捷入口地址')}}
                     </div>
                     <div class="sub-label"
                          v-if="mskData.selectType==5 && FeatureKeyList.indexOf('Newsletter')>=0">
-                      选择资讯分类地址
+                      {{__('选择资讯分类地址')}}
                     </div>
                     <div class="sub-label"
                          v-if="mskData.selectType==6 && FeatureKeyList.indexOf('Newsletter')>=0">
-                      选择资讯地址
+                      {{__('选择资讯地址')}}
                     </div>
                     <div class="sub-label"
                          v-if="mskData.selectType==8 && FeatureKeyList.indexOf('DiyLnkPage')>=0">
-                      选择二级页面
+                      {{__('选择二级页面')}}
                     </div>
 
                     <div class="sub-label"
                          v-if="mskData.selectType==10 && FeatureKeyList.indexOf('Comnity')>=0">
-                      选择社区板块地址
+                      {{__('选择社区板块地址')}}
                     </div>
                     <div class="sub-label"
                          v-if="mskData.selectType==11 && FeatureKeyList.indexOf('Comnity')>=0">
-                      选择社区帖子地址
+                      {{__('选择社区帖子地址')}}
                     </div>
                     <div class="sub-label" v-if="mskData.selectType==12">
-                      请输入电话/手机号码
+                      {{__('请输入电话/手机号码')}}
                     </div>
                     <div class="sub-label" v-if="mskData.selectType==17">
-                      选择优惠券
+                      {{__('选择优惠券')}}
                     </div>
                     <div class="inputBox"
                          v-if="mskData.selectType!=9  && mskData.selectType!=12">
@@ -4444,7 +4615,7 @@
                              style="width: 90%;margin-bottom: 10px;"/>
                       <input type="text" v-model="mskData.name" placeholder="请选择地址"/><a
                       href="javascript:void(0)" v-on:click="getModuleTplData"
-                      :selectid="mskData.id" :urlType="mskData.selectType">选择</a>
+                      :selectid="mskData.id" :urlType="mskData.selectType">{{__('选择')}}</a>
                     </div>
                     <div class="inputBox" v-if="mskData.selectType==12">
                       <input type="text" v-model="mskData.name" placeholder="请输入电话号码"/>
@@ -4452,17 +4623,17 @@
                     <span v-if="mskData.selectType==9">
 													<div class="sub-level1 box_border">
 														<div class="sub-label">
-															输入网页地址 </div>
+															{{__('输入网页地址')}} </div>
 														<div class="inputBox">
 															<input type="text" v-model="mskData.AppUrl"
                                      placeholder="请输入网页地址"/>
 															<p style="color: red;line-height: 20px;">
-																注：需登录小程序管理后台配置域名白名单。</p>
+																{{__('注：需登录小程序管理后台配置域名白名单。')}}</p>
 														</div>
 													</div>
 													<div class="sub-level1 box_border">
 														<div class="sub-label">
-															标题 </div>
+															{{__('标题')}} </div>
 														<div class="inputBox">
 															<input type="text" v-model="mskData.name"
                                      placeholder="请输入标题"/>
@@ -4470,7 +4641,7 @@
 													</div>
 													<div class="sub-level1 box_border">
 														<div class="sub-label">
-															标题栏颜色 </div>
+															{{__('标题栏颜色')}} </div>
 														<div class="inputBox">
 															<input type="color" v-model="mskData.keyWord"
                                      placeholder="请选择标题栏颜色"/>
@@ -4478,7 +4649,7 @@
 													</div>
 													<div class="sub-level1 box_border">
 														<div class="sub-label">
-															标题文字颜色 </div>
+															{{__('标题文字颜色')}} </div>
 														<div class="inputicon">
 															<div class="radioBox">
 																<input type="radio" id="Radio51" v-model="mskData.AppId"
@@ -4503,7 +4674,7 @@
                   <!--图片 start-->
                   <div class="sub-level1 box_border">
                     <div class="sub-label">
-                      上传图片
+                      {{__('上传图片')}}
                     </div>
                     <div class="info_box">
                       <div class="inputicon m_data_img">
@@ -4532,7 +4703,7 @@
 
                       <i style="float: left;margin-right: 10px; cursor: pointer;"
                          class="iconfont icon-sort" title="拖动排序"></i>
-                      第{{index+1}}项 <span class="isHome"></span>
+                      {{sprintf(__('第 %s 项'), (index+1))}} <span class="isHome"></span>
                       <i class="iconfont icon-moreunfold"></i>
                       <i class="iconfont icon-icon-del-copy" :deleteId="item.id"
                          v-on:click.stop="deleteItem"></i>
@@ -4541,7 +4712,7 @@
                       <!--尺寸 start-->
                       <div class="sub-level1 box_border">
                         <div class="sub-label">
-                          链接地址
+                          {{__('链接地址')}}
                         </div>
                         <div class="minIcon">
                           <div class="inputicon">
@@ -4549,7 +4720,7 @@
                               <input type="radio" :id="'Radio49'+item.id"
                                      v-model="item.selectType" value="0"/>
                               <label :for="'Radio49'+item.id">
-                                <i>无链接</i>
+                                <i>{{__('无链接')}}</i>
                               </label>
                             </div>
                           </div>
@@ -4558,7 +4729,7 @@
                               <input type="radio" :id="'Radio34'+item.id"
                                      v-model="item.selectType" value="1"/>
                               <label :for="'Radio34'+item.id">
-                                <i>商品</i>
+                                <i>{{__('商品')}}</i>
                               </label>
                             </div>
                           </div>
@@ -4567,7 +4738,7 @@
                               <input type="radio" :id="'Radio35'+item.id"
                                      v-model="item.selectType" value="2"/>
                               <label :for="'Radio35'+item.id">
-                                <i>分类</i>
+                                <i>{{__('分类')}}</i>
                               </label>
                             </div>
                           </div>
@@ -4576,7 +4747,7 @@
                               <input type="radio" :id="'Radio36'+item.id"
                                      v-model="item.selectType" value="3"/>
                               <label :for="'Radio36'+item.id">
-                                <i>搜索</i>
+                                <i>{{__('搜索')}}</i>
                               </label>
                             </div>
                           </div>
@@ -4585,7 +4756,7 @@
                               <input type="radio" :id="'Radio37'+item.id"
                                      v-model="item.selectType" value="4"/>
                               <label :for="'Radio37'+item.id">
-                                <i>快捷入口</i>
+                                <i>{{__('快捷入口')}}</i>
                               </label>
                             </div>
                           </div>
@@ -4595,7 +4766,7 @@
                               <input type="radio" :id="'Radio38'+item.id"
                                      v-model="item.selectType" value="5"/>
                               <label :for="'Radio38'+item.id">
-                                <i>资讯分类</i>
+                                <i>{{__('资讯分类')}}</i>
                               </label>
                             </div>
                           </div>
@@ -4605,7 +4776,7 @@
                               <input type="radio" :id="'Radio39'+item.id"
                                      v-model="item.selectType" value="6"/>
                               <label :for="'Radio39'+item.id">
-                                <i>资讯</i>
+                                <i>{{__('资讯')}}</i>
                               </label>
                             </div>
                           </div>
@@ -4614,7 +4785,7 @@
                               <input type="radio" :id="'Radio40'+item.id"
                                      v-model="item.selectType" value="7"/>
                               <label :for="'Radio40'+item.id">
-                                <i>小程序</i>
+                                <i>{{__('小程序')}}</i>
                               </label>
                             </div>
                           </div>
@@ -4624,7 +4795,7 @@
                               <input type="radio" :id="'Radio50'+item.id"
                                      v-model="item.selectType" value="8"/>
                               <label :for="'Radio50'+item.id">
-                                <i>自定义页面</i>
+                                <i>{{__('自定义页面')}}</i>
                               </label>
                             </div>
                           </div>
@@ -4633,7 +4804,7 @@
                               <input type="radio" :id="'Radio51'+item.id"
                                      v-model="item.selectType" value="9"/>
                               <label :for="'Radio51'+item.id">
-                                <i>网页地址</i>
+                                <i>{{__('网页地址')}}</i>
                               </label>
                             </div>
                           </div>
@@ -4644,7 +4815,7 @@
                               <input type="radio" :id="'Radio62'+item.id"
                                      v-model="item.selectType" value="10"/>
                               <label :for="'Radio62'+item.id">
-                                <i>社区板块</i>
+                                <i>{{__('社区板块')}}</i>
                               </label>
                             </div>
                           </div>
@@ -4654,7 +4825,7 @@
                               <input type="radio" :id="'Radio61'+item.id"
                                      v-model="item.selectType" value="11"/>
                               <label :for="'Radio61'+item.id">
-                                <i>社区帖子</i>
+                                <i>{{__('社区帖子')}}</i>
                               </label>
                             </div>
                           </div>
@@ -4663,7 +4834,7 @@
                               <input type="radio" :id="'Radio68'+item.id"
                                      v-model="item.selectType" value="12"/>
                               <label :for="'Radio68'+item.id">
-                                <i>拨打电话</i>
+                                <i>{{__('拨打电话')}}</i>
                               </label>
                             </div>
                           </div>
@@ -4672,7 +4843,7 @@
                               <input type="radio" :id="'Radio74'+item.id"
                                      v-model="item.selectType" value="17"/>
                               <label :for="'Radio74'+item.id">
-                                <i>优惠券</i>
+                                <i>{{__('优惠券')}}</i>
                               </label>
                             </div>
                           </div>
@@ -4682,7 +4853,7 @@
                       <!--设置 start-->
                       <div class="sub-level1 box_border" v-if="item.selectType==3">
                         <div class="sub-label">
-                          搜索关键字
+                          {{__('搜索关键字')}}
                         </div>
                         <div class="inputBox">
                           <input maxlength="20" type="text" placeholder="请输入搜索关键字"
@@ -4691,7 +4862,7 @@
                       </div>
                       <div class="sub-level1 box_border" v-if="item.selectType==7">
                         <div class="sub-label">
-                          APPID
+                          {{__('APPID')}}
                         </div>
                         <div class="inputBox">
                           <input type="text" v-model="item.AppId"
@@ -4700,7 +4871,7 @@
                       </div>
                       <div class="sub-level1 box_border" v-if="item.selectType==7">
                         <div class="sub-label">
-                          小程序跳转地址
+                          {{__('小程序跳转地址')}}
                         </div>
                         <div class="inputBox">
                           <input type="text" v-model="item.AppUrl"
@@ -4710,7 +4881,7 @@
                       <div class="sub-level1 box_border"
                            v-if="item.selectType==7 || item.selectType==3 || item.selectType==0">
                         <div class="sub-label">
-                          名称
+                          {{__('名称')}}
                         </div>
                         <div class="inputBox">
                           <input type="text" v-model="item.name" placeholder="请输入名称"
@@ -4722,12 +4893,12 @@
                           <div class="inputBox inputBtn" style="display:grid;">
                             <input type="button" v-on:click="getModuleTplData"
                                    :selectid="item.id" :urlType="item.selectType"
-                                   value="选择商品">
+                                   :value="__('选择商品')">
                           </div>
                         </div>
                         <div class="sub-level1 box_border">
                           <div class="sub-label">
-                            名称
+                            {{__('名称')}}
                           </div>
                           <div class="inputBox">
                             <input type="text" v-model="item.name"
@@ -4736,7 +4907,7 @@
                         </div>
                         <div class="sub-level1 box_border">
                           <div class="sub-label">
-                            卖点
+                            {{__('卖点')}}
                           </div>
                           <div class="inputBox">
                             <input type="text" v-model="item.ProductTips"
@@ -4745,7 +4916,7 @@
                         </div>
                         <div class="sub-level1 box_border">
                           <div class="sub-label">
-                            价格
+                            {{__('价格')}}
                           </div>
                           <div class="inputBox">
                             <input type="text" v-model="item.ItemSalePrice"
@@ -4756,34 +4927,34 @@
                       <div class="sub-level1 box_border"
                            v-if="item.selectType!=1 && item.selectType!=3 && item.selectType!=7 && item.selectType!=0">
                         <div class="sub-label" v-if="item.selectType==2">
-                          选择分类地址
+                          {{__('选择分类地址')}}
                         </div>
                         <div class="sub-label" v-if="item.selectType==4">
-                          选择快捷入口地址
+                          {{__('选择快捷入口地址')}}
                         </div>
                         <div class="sub-label" v-if="item.selectType==5">
-                          选择资讯分类地址
+                          {{__('选择资讯分类地址')}}
                         </div>
                         <div class="sub-label" v-if="item.selectType==6">
-                          选择资讯地址
+                          {{__('选择资讯地址')}}
                         </div>
                         <div class="sub-label"
                              v-if="item.selectType==8 && FeatureKeyList.indexOf('DiyLnkPage')>=0">
-                          选择二级页面
+                          {{__('选择二级页面')}}
                         </div>
                         <div class="sub-label"
                              v-if="item.selectType==10 && FeatureKeyList.indexOf('Comnity')>=0">
-                          选择社区板块页面
+                          {{__('选择社区板块页面')}}
                         </div>
                         <div class="sub-label"
                              v-if="item.selectType==11 && FeatureKeyList.indexOf('Comnity')>=0">
-                          选择社区帖子页面
+                          {{__('选择社区帖子页面')}}
                         </div>
                         <div class="sub-label" v-if="item.selectType==12">
-                          请输入电话/手机号码
+                          {{__('请输入电话/手机号码')}}
                         </div>
                         <div class="sub-label" v-if="item.selectType==17">
-                          选择优惠券
+                          {{__('选择优惠券')}}
                         </div>
                         <div class="inputBox"
                              v-if="item.selectType!=9 && item.selectType!=12">
@@ -4796,7 +4967,7 @@
                                  placeholder="请选择地址"/>
 
                           <a href="javascript:void(0)" v-on:click="getModuleTplData"
-                             :selectid="item.id" :urlType="item.selectType">选择</a>
+                             :selectid="item.id" :urlType="item.selectType">{{__('选择')}}</a>
                         </div>
 
                         <div class="inputBox" v-if="item.selectType==15">
@@ -4814,17 +4985,17 @@
                         <span v-if="item.selectType==9">
 															<div class="sub-level1 box_border">
 																<div class="sub-label">
-																	输入网页地址 </div>
+																	{{__('输入网页地址')}} </div>
 																<div class="inputBox">
 																	<input type="text" v-model="item.AppUrl"
                                          placeholder="请输入网页地址"/>
 																	<p style="color: red;line-height: 20px;">
-																		注：需登录小程序管理后台配置域名白名单。</p>
+																		{{__('注：需登录小程序管理后台配置域名白名单。')}}</p>
 																</div>
 															</div>
 															<div class="sub-level1 box_border">
 																<div class="sub-label">
-																	标题 </div>
+																	{{__('标题')}} </div>
 																<div class="inputBox">
 																	<input type="text" v-model="item.name"
                                          placeholder="请输入标题"/>
@@ -4832,7 +5003,7 @@
 															</div>
 															<div class="sub-level1 box_border">
 																<div class="sub-label">
-																	标题栏颜色 </div>
+																	{{__('标题栏颜色')}} </div>
 																<div class="inputBox">
 																	<input type="color" v-model="item.keyWord"
                                          placeholder="请选择标题栏颜色"/>
@@ -4840,7 +5011,7 @@
 															</div>
 															<div class="sub-level1 box_border">
 																<div class="sub-label">
-																	标题文字颜色 </div>
+																	{{__('标题文字颜色')}} </div>
 																<div class="inputicon">
 																	<div class="radioBox">
 																		<input type="radio" :id="'Radio53'+item.id"
@@ -4865,7 +5036,7 @@
                       <!--图片 start-->
                       <div class="sub-level1 box_border">
                         <div class="sub-label">
-                          上传图片
+                          {{__('上传图片')}}
                         </div>
                         <div class="info_box">
                           <div class="inputicon m_data_img">
@@ -4888,7 +5059,7 @@
                       </div>
                       <div class="sub-level1  box_border" v-if="msType==6">
                         <div class="sub-label">
-                          宽度
+                          {{__('宽度')}}
                         </div>
                         <div class="inputicon">
                           <input type="range" v-model="item.flexNum" max="375"
@@ -4899,12 +5070,12 @@
                     </div>
                   </div>
                   <div class="msk_add_ad" v-on:click="addModuleContent">
-                    <label></label>添加
+                    <label></label>{{__('添加')}}
                   </div>
                 </div>
                 <div v-if="msType==2">
                   <div class="sub-label">
-                    富文本内容
+                    {{__('富文本内容')}}
                   </div>
                   <div class="inputBox">
                     <a href="javascript:void(0)" v-on:click="getModuleTplData"
@@ -4917,7 +5088,7 @@
                 <div v-if="msType==13">
                   <div class="expand_menu_box" v-for="(item,index) in mskDataArray">
                     <div class="sub-level-title" v-on:click="expandMenu">
-                      第{{index+1}}项 <span class="isHome"></span>
+                      {{sprintf(__('第 %s 项'), (index+1))}} <span class="isHome"></span>
                       <i class="iconfont icon-moreunfold"></i>
                       <i class="iconfont icon-icon-del-copy" :deleteId="item.id"
                          v-on:click.stop="deleteItem"></i>
@@ -4925,7 +5096,7 @@
                     <div class="expand_menu_content" v-bind:class="{hidebox:index>0}">
                       <div class="sub-level1 box_border">
                         <div class="sub-label" style="width: 100%">
-                          控件类型
+                          {{__('控件类型')}}
                         </div>
                         <div class="inputicon sub-type">
                           <div class="radioBox">
@@ -4996,7 +5167,7 @@
                       </div>
                       <div class="sub-level1 box_border">
                         <div class="sub-label">
-                          标题
+                          {{__('标题')}}
                         </div>
                         <div class="inputBox">
                           <input type="text" v-model="item.labelText"
@@ -5005,7 +5176,7 @@
                       </div>
                       <div class="sub-level1 box_border" v-if="item.type<4">
                         <div class="sub-label">
-                          占位符
+                          {{__('占位符')}}
                         </div>
                         <div class="inputBox">
                           <input type="text" v-model="item.placeholderText"
@@ -5013,7 +5184,7 @@
                         </div>
                         <div class="sub-level1 box_border">
                           <div class="sub-label">
-                            边框颜色
+                            {{__('边框颜色')}}
                           </div>
                           <div class="inputBox">
                             <input type="color" v-model="item.borderColor"
@@ -5022,7 +5193,7 @@
                         </div>
                         <div class="sub-level1 box_border">
                           <div class="sub-label">
-                            验证类型
+                            {{__('验证类型')}}
                           </div>
                           <div class="inputicon">
                             <div class="radioBox">
@@ -5051,7 +5222,7 @@
                         </div>
                         <div class="sub-level1 box_border">
                           <div class="sub-label">
-                            是否必填
+                            {{__('是否必填')}}
                           </div>
                           <div class="inputicon">
                             <input class="weui-switch" type="checkbox"
@@ -5062,7 +5233,7 @@
                       <div v-if="item.type==4 || item.type==5">
                         <div class="sub-level1 box_border">
                           <div class="sub-label">
-                            选项名称
+                            {{__('选项名称')}}
                           </div>
                           <div class="inputBox" v-for="info in item.data"
                                style="margin: 5px;">
@@ -5070,15 +5241,15 @@
                                    placeholder="请输入标题"/><a :dataid="info.id"
                                                            :datapid="item.id"
                                                            v-on:click="delCKInput"
-                                                           style="cursor: pointer;">删除</a>
+                                                           style="cursor: pointer;">{{__('删除')}}</a>
                           </div>
                         </div>
                         <div class="sub-level1 box_border addSel">
-                          <a :dataid="item.id" v-on:click="addCKInput">+添加选项</a>
+                          <a :dataid="item.id" v-on:click="addCKInput">{{__('+添加选项')}}</a>
                         </div>
                         <div class="sub-level1 box_border">
                           <div class="sub-label">
-                            边框颜色
+                            {{__('边框颜色')}}
                           </div>
                           <div class="inputBox">
                             <input type="color" v-model="item.selColor"
@@ -5089,7 +5260,7 @@
                       <div v-if="item.type==6">
                         <div class="sub-level1 box_border">
                           <div class="sub-label">
-                            是否必传
+                            {{__('是否必传')}}
                           </div>
                           <div class="inputicon">
                             <input class="weui-switch" type="checkbox"
@@ -5098,7 +5269,7 @@
                         </div>
                         <div class="sub-level1 box_border">
                           <div class="sub-label">
-                            最多上传{{item.moreNum}}张
+                            {{sprintf(__('最多上传 %d 张'), item.moreNum)}}
                           </div>
                           <div class="inputBox">
                             <input type="range" v-model="item.moreNum" max="9"
@@ -5109,7 +5280,7 @@
                       <div v-if="item.type==5" style="display:none">
                         <div class="sub-level1 box_border">
                           <div class="sub-label">
-                            最少选择
+                            {{__('最少选择')}}
                           </div>
                           <div class="inputBox">
                             <input type="text" v-model="item.minSel"
@@ -5118,7 +5289,7 @@
                         </div>
                         <div class="sub-level1 box_border">
                           <div class="sub-label">
-                            最多选择
+                            {{__('最多选择')}}
                           </div>
                           <div class="inputBox">
                             <input type="text" v-model="item.maxSel"
@@ -5129,7 +5300,7 @@
                     </div>
                   </div>
                   <div class="msk_add_ad" v-on:click="addInput">
-                    <label></label>添加
+                    <label></label>{{__('添加')}}
                   </div>
                 </div>
                 <div id="data-box" v-if="msType==16">
@@ -5137,7 +5308,7 @@
                     <div class="sub-level-title" v-on:click="expandMenu">
                       <i style="float: left;margin-right: 10px; cursor: pointer;"
                          class="iconfont icon-sort" title="拖动排序"></i>
-                      第{{index+1}}项 <span class="isHome"></span>
+                      {{sprintf(__('第 %s 项'), (index+1))}} <span class="isHome"></span>
                       <i class="iconfont icon-moreunfold"></i>
                       <i class="iconfont icon-icon-del-copy" :deleteId="item.id"
                          v-on:click.stop="deleteItem"></i>
@@ -5145,7 +5316,7 @@
                     <div class="expand_menu_content" v-bind:class="{hidebox:index>0}">
                       <div class="sub-level1 box_border">
                         <div class="sub-label">
-                          商品类型
+                          {{__('商品类型')}}
                         </div>
                         <div class="minIcon">
                           <div class="inputicon">
@@ -5153,7 +5324,7 @@
                               <input type="radio" :id="'Radio71'+item.id"
                                      v-model="item.selectType" value="12"/>
                               <label :for="'Radio71'+item.id">
-                                <i>拼团商品</i>
+                                <i>{{__('拼团商品')}}</i>
                               </label>
                             </div>
                           </div>
@@ -5162,7 +5333,7 @@
                               <input type="radio" :id="'Radio72'+item.id"
                                      v-model="item.selectType" value="13"/>
                               <label :for="'Radio72'+item.id">
-                                <i>抽奖团商品</i>
+                                <i>{{__('抽奖团商品')}}</i>
                               </label>
                             </div>
                           </div>
@@ -5171,7 +5342,7 @@
                               <input type="radio" :id="'Radio73'+item.id"
                                      v-model="item.selectType" value="14"/>
                               <label :for="'Radio73'+item.id">
-                                <i>秒杀商品</i>
+                                <i>{{__('秒杀商品')}}</i>
                               </label>
                             </div>
                           </div>
@@ -5180,7 +5351,7 @@
                               <input type="radio" :id="'Radio80'+item.id"
                                      v-model="item.selectType" value="15"/>
                               <label :for="'Radio80'+item.id">
-                                <i>砍价商品</i>
+                                <i>{{__('砍价商品')}}</i>
                               </label>
                             </div>
                           </div>
@@ -5188,7 +5359,7 @@
                       </div>
                       <div class="sub-level1 box_border">
                         <div class="sub-label">
-                          按钮文字
+                          {{__('按钮文字')}}
                         </div>
                         <div class="inputBox">
                           <input type="text" v-model="item.words"
@@ -5199,12 +5370,12 @@
                         <div class="inputBox inputBtn" style="display:grid;">
                           <input type="button" v-on:click="getModuleTplData"
                                  :selectid="item.id" :urlType="item.selectType"
-                                 value="选择商品">
+                                 :value="__('选择商品')">
                         </div>
                       </div>
                       <div class="sub-level1 box_border">
                         <div class="sub-label">
-                          已选择
+                          {{__('已选择')}}
                         </div>
                         <div class="produc-info">
                           <div class="inputicon m_data_img"><span
@@ -5220,16 +5391,16 @@
                           </div>
                           <div class="text-info">
                             <span>{{item.name}}</span>
-                            <span>开始时间：{{item.StartTimeStr}}</span>
-                            <span>结束时间：{{item.EndTimeStr}}</span>
-                            <span>活动价：<em>￥{{item.ItemSalePrice}}</em></span>
+                            <span>{{__('开始时间')}}：{{item.StartTimeStr}}</span>
+                            <span>{{__('结束时间')}}：{{item.EndTimeStr}}</span>
+                            <span>{{__('活动价')}}：<em>￥{{item.ItemSalePrice}}</em></span>
                           </div>
                         </div>
                       </div>
                     </div>
                   </div>
                   <div class="msk_add_ad" v-on:click="addModuleContent" :msType="msType">
-                    <label :msType="msType"></label>添加
+                    <label :msType="msType"></label>{{__('添加')}}
                   </div>
                 </div>
                 <div id="data-box" v-if="msType==104">
@@ -5237,7 +5408,7 @@
                     <div class="sub-level-title" v-on:click="expandMenu">
                       <i style="float: left;margin-right: 10px; cursor: pointer;"
                          class="iconfont icon-sort" title="拖动排序"></i>
-                      第{{index+1}}项 <span class="isHome"></span>
+                      {{sprintf(__('第 %s 项'), (index+1))}} <span class="isHome"></span>
                       <i class="iconfont icon-moreunfold"></i>
                       <i class="iconfont icon-icon-del-copy" :deleteId="item.id"
                          v-on:click.stop="deleteItem"></i>
@@ -5245,7 +5416,7 @@
                     <div class="expand_menu_content" v-bind:class="{hidebox:index>0}">
                       <div class="sub-level1 box_border">
                         <div class="sub-label">
-                          商品类型
+                          {{__('商品类型')}}
                         </div>
                         <div class="minIcon">
                           <div class="inputicon" style="display: none;">
@@ -5253,7 +5424,7 @@
                               <input type="radio" :id="'Radio80'+item.id"
                                      v-model="item.selectType" value="104"/>
                               <label :for="'Radio80'+item.id">
-                                <i>砍价商品</i>
+                                <i>{{__('砍价商品')}}</i>
                               </label>
                             </div>
                           </div>
@@ -5261,7 +5432,7 @@
                       </div>
                       <div class="sub-level1 box_border">
                         <div class="sub-label">
-                          分类名称
+                          {{__('分类名称')}}
                         </div>
                         <div class="inputBox">
                           <input type="text" v-model="item.name"
@@ -5273,14 +5444,14 @@
                         <div class="inputBox inputBtn" style="display:grid;">
                           <input type="button" v-on:click="getModuleTplData"
                                  :selectid="item.id" :selectdataids="item.ids || item.did" :urlType="item.selectType"
-                                 value="选择商品">
+                                 :value="__('选择商品')">
                         </div>
                       </div>
 
                       <!-- 已选择 -->
                       <div class="sub-level1 box_border">
                         <div class="sub-label">
-                          已选择
+                          {{__('已选择')}}
                         </div>
                         <div class="inputBox">
                                                     <textarea type="text" v-model="item.ids"
@@ -5293,7 +5464,7 @@
                       <!--分类商品 start-->
                       <div class="sub-level1 box_border">
                         <div class="sub-label">
-                          是否展示过滤价格
+                          {{__('是否展示过滤价格')}}
                         </div>
                         <div class="inputicon">
                           <input class="weui-switch" type="checkbox"
@@ -5302,7 +5473,7 @@
                       </div>
                       <div class="sub-level1 box_border">
                         <div class="sub-label">
-                          价格区域选项
+                          {{__('价格区域选项')}}
                         </div>
                         <div class="inputBox">
                           <input type="text" v-model="item.title"/>
@@ -5311,7 +5482,7 @@
 
                       <div class="sub-level1 box_border">
                         <div class="sub-label">
-                          排序选项
+                          {{__('排序选项')}}
                         </div>
                         <div class="inputBox">
                           <input type="text" v-model="item.options"/>
@@ -5321,7 +5492,7 @@
                     </div>
                   </div>
                   <div class="msk_add_ad" v-on:click="addModuleContent" :msType="msType">
-                    <label :msType="msType"></label>添加
+                    <label :msType="msType"></label>{{__('添加')}}
                   </div>
                 </div>
               </div>

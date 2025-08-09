@@ -101,12 +101,7 @@ module.exports = defineConfig({
   productionSourceMap: false,
   css: {
     sourceMap: false,
-    extract:
-      process.env.NODE_ENV === 'production'
-        ? {
-            ignoreOrder: true,
-          }
-        : false,
+    extract:false,
     loaderOptions: {
       sass: {
         sassOptions: { outputStyle: 'expanded' },
